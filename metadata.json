@@ -1,0 +1,6 @@
+{
+  "name": "TopGrand",
+  "description": "Butun dunyo oliygohlariga konsaltingsiz bevosita topshirish va sun'iy intellekt yordamida tayyorlanish platformasi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
