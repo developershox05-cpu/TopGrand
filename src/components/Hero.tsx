@@ -179,10 +179,7 @@ export default function Hero({ user, onOpenAuth, onLogout, onOpenPremium, active
                     <UserCheck className="h-4 w-4" />
                   </div>
                   <div className="text-left hidden sm:block">
-                    <p className="text-xs font-bold leading-3 text-white truncate max-w-[100px]">{user.name}</p>
-                    <span onClick={onOpenPremium} className="cursor-pointer text-[10px] font-mono text-cyan-400 font-semibold hover:underline">
-                      {user.isPremium ? "💎 Premium" : "🌟 Standart"}
-                    </span>
+                    <p className="text-xs font-bold leading-tight text-white truncate max-w-[120px]">{user.name} {user.surname}</p>
                   </div>
                   <button
                     onClick={onLogout}

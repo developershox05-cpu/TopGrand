@@ -17,12 +17,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   if (!isOpen) return null;
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -41,16 +43,29 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       return;
     }
 
-    // Save temporary registration details
-    localStorage.setItem('temp_user', JSON.stringify({ name, surname, email, password }));
-    
-    // Switch to simulated verification mode
-    setMode('verify');
-    setSuccessMsg(`Biz sizning ${email} emailingizga 6 xonali tasdiqlash kodini yubordik (Kodni istalgan son sifatida kiriting).`);
+    setIsLoading(true);
+
+    try {
+      const newUser = { name, surname, email, password, isPremium: false, usageLog: {} };
+      // Save permanently in localStorage
+      localStorage.setItem(`user_${email}`, JSON.stringify(newUser));
+      // Store current logged-in user
+      localStorage.setItem('current_user', JSON.stringify({ ...newUser, isLoggedIn: true }));
+      
+      onSuccess({ name, surname, email });
+      onClose();
+    } catch (err: any) {
+      console.error(err);
+      setError("Ro'yxatdan o'tishda xatolik yuz berdi. Qaytadan urinib ko'ring.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    
     if (!verificationCode) {
       setError("Iltimos, tasdiqlash kodini kiriting.");
       return;
@@ -59,6 +74,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     const temp = localStorage.getItem('temp_user');
     if (temp) {
       const parsed = JSON.parse(temp);
+      
+      // Allow exact match or master key 123456
+      if (verificationCode !== parsed.code && verificationCode !== "123456") {
+        setError("Tasdiqlash kodi noto'g'ri. Iltimos pochtangizni qaytadan tekshirib ko'ring.");
+        return;
+      }
+
       // Save permanently
       localStorage.setItem(`user_${parsed.email}`, JSON.stringify(parsed));
       // Store current logged-in user
@@ -67,7 +89,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       onSuccess({ name: parsed.name, surname: parsed.surname, email: parsed.email });
       onClose();
     } else {
-      setError("Xatolik yuz berdi. Iltimos qaytadan ro'yxatdan o'ting.");
+      setError("Sessiya muddati tugadi yoki xatolik yuz berdi. Qaytadan ro'yxatdan o'ting.");
       setMode('register');
     }
   };
@@ -282,13 +304,30 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
 
             <button
               type="submit"
-              className="mt-2 w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 font-semibold text-white shadow-lg hover:shadow-cyan-500/20 active:scale-[0.98] transition duration-150 relative overflow-hidden group"
+              disabled={isLoading}
+              className={`mt-2 w-full py-3 rounded-xl font-semibold text-white shadow-lg transition duration-150 relative overflow-hidden group ${
+                isLoading 
+                  ? "bg-slate-700/50 cursor-not-allowed opacity-80 border border-white/5" 
+                  : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:shadow-cyan-500/20 active:scale-[0.98]"
+              }`}
               id="btn-register-submit"
             >
               <span className="relative z-10 flex items-center justify-center gap-1.5">
-                Ro'yxatdan O'tish <Sparkles className="h-4 w-4" />
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Kod Yuborilmoqda...
+                  </>
+                ) : (
+                  <>
+                    Ro'yxatdan O'tish <Sparkles className="h-4 w-4" />
+                  </>
+                )}
               </span>
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-transform duration-300 group-hover:translate-x-0"></div>
+              {!isLoading && <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-transform duration-300 group-hover:translate-x-0"></div>}
             </button>
 
             <div className="text-center mt-4">

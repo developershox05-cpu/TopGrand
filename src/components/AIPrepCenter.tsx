@@ -244,8 +244,16 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
           >
             {tools.map((tool) => {
               const ToolIcon = tool.icon;
-              // Unlock all tools to make 100% free as requested
-              const isLocked = false;
+              const lastUsedStr = user.usageLog?.[tool.key];
+              let isLocked = false;
+              if (lastUsedStr) {
+                const lastUsed = new Date(lastUsedStr);
+                const now = new Date();
+                const diffHours = (now.getTime() - lastUsed.getTime()) / (1000 * 60 * 60);
+                if (diffHours < 24) {
+                  isLocked = true;
+                }
+              }
 
               return (
                 <div
@@ -267,9 +275,9 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                       )}
 
                       {isLocked && (
-                        <span className="flex items-center gap-1 text-[10px] text-red-650 bg-red-100 px-2 py-0.5 rounded-full border border-red-200/50 font-bold">
+                        <span className="flex items-center gap-1 text-[10px] text-orange-650 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-250 font-bold">
                           <Lock className="h-3 w-3" />
-                          <span>Locked</span>
+                          <span>Limit</span>
                         </span>
                       )}
                     </div>
@@ -286,7 +294,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
 
                   <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-600">
                     <span className="text-[10px] font-mono text-slate-500 font-bold uppercase">
-                      Status: {isLocked ? "24soat to'siq" : "Faol bepul"}
+                      Status: {isLocked ? "Limit (24s kuting)" : "Faol bepul"}
                     </span>
                     <span className="flex items-center gap-1 group-hover:translate-x-1 transition duration-150">
                       Modulni boshlash <ArrowRight className="h-4 w-4 text-blue-600" />
@@ -302,61 +310,62 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 15 }}
-            className="w-full max-w-4xl mx-auto rounded-[2.5rem] border border-white/60 bg-white/85 p-6 md:p-8 backdrop-blur-xl space-y-6 shadow-2xl relative z-10 text-slate-800"
+            className="w-full max-w-4xl mx-auto rounded-[2.5rem] border border-slate-800 bg-slate-950/95 p-6 md:p-8 backdrop-blur-xl space-y-6 shadow-2xl relative z-10 text-white"
             id="ai-workspace"
           >
             {/* Header / Nav-back */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSelectedTool(null)}
-                  className="px-4 py-2 rounded-xl border border-blue-200 bg-white text-xs font-bold text-blue-700 hover:bg-blue-50 transition cursor-pointer shadow-sm"
+                  className="px-4 py-2 rounded-xl border border-slate-800 bg-slate-900 text-xs font-bold text-cyan-400 hover:bg-slate-850 transition cursor-pointer shadow-sm"
                   id="btn-workspace-back"
                 >
                   ← Katalogga qaytish
                 </button>
                 <div className="hidden sm:flex items-center gap-2">
-                  <span className="text-xs text-slate-300">/</span>
-                  <span className="text-xs text-blue-700 font-extrabold">{selectedTool.title}</span>
+                  <span className="text-xs text-slate-500">/</span>
+                  <span className="text-xs text-cyan-400 font-extrabold">{selectedTool.title}</span>
                 </div>
               </div>
 
               {!user.isPremium && (
-                <div className="flex items-center gap-1.5 text-xs text-blue-600 font-bold font-mono">
-                  <Clock className="h-4 w-4 shrink-0 text-blue-600" />
-                  <span>24soat ichida 1 marta limit statusi</span>
+                <div className="flex items-center gap-1.5 text-xs text-cyan-450 font-bold font-mono">
+                  <Clock className="h-4 w-4 shrink-0 text-cyan-400" />
+                  <span className="text-slate-300">24 soatlik limit faol</span>
                 </div>
               )}
             </div>
 
-            {/* Check if Locked due to 24-hour limit - permanently disabled to make 100% free */}
+            {/* Check if Locked due to 24-hour limit */}
             {(() => {
-              const isLocked = false;
-              const lastUsedStr = "";
+              const lastUsedStr = user.usageLog?.[selectedTool.key];
+              let isLocked = false;
+              if (lastUsedStr) {
+                const lastUsed = new Date(lastUsedStr);
+                const now = new Date();
+                const diffHours = (now.getTime() - lastUsed.getTime()) / (1000 * 60 * 60);
+                if (diffHours < 24) {
+                  isLocked = true;
+                }
+              }
 
               if (isLocked) {
                 return (
                   <div className="text-center py-10 space-y-6 max-w-md mx-auto" id="tool-locked-warning">
-                    <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-red-100 text-red-600 border border-red-200 p-4 shadow-sm">
+                    <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-orange-500/10 text-orange-400 border border-orange-500/20 p-4 shadow-sm">
                       <Lock className="h-10 w-10 animate-bounce" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-900">24 soatlik bepul limit tugadi</h3>
-                      <p className="text-xs text-slate-500 mt-2 leading-relaxed font-semibold">
-                        Ushbu AI modulidan har 24 soatda faqat 1 marta bepul foydalanish mumkin! Yana foydalanish uchun 24 soat kuting yoki Premium ruxsatni oling!
+                      <h3 className="text-lg font-black text-white">Limit: Bugungi bepul imkoniyatingizdan foydalanib bo'ldingiz!</h3>
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed font-semibold">
+                        Siz ushbu AI modulidan oxirgi 24 soat ichida foydalangansiz. Platformada har bir moduldan 24 soatda faqat 1 marta foydalanish mumkin.
                       </p>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-bold font-mono shadow-inner">
-                      Navbatdagi imkoniyat: <span className="text-blue-700 font-black">{new Date(new Date(lastUsedStr).getTime() + 24*60*60*1000).toLocaleString()}</span>
+                    <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-400 font-bold font-mono shadow-inner">
+                      Navbatdagi imkoniyat: <span className="text-cyan-400 font-black">{new Date(new Date(lastUsedStr).getTime() + 24*60*60*1000).toLocaleString()}</span>
                     </div>
-
-                    <button
-                      onClick={onOpenPremium}
-                      className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 hover:brightness-110 active:scale-95 transition font-black text-white shadow-lg shadow-blue-500/25"
-                    >
-                      Daxshatli Premium Olish
-                    </button>
                   </div>
                 );
               }
@@ -364,8 +373,8 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
               return (
                 /* ACTUAL TOOL ACTIVE INPUT FORM & RESULTS */
                 <div className="space-y-6">
-                  <h3 className="text-lg font-black text-blue-950 flex items-center gap-2">
-                    <span className="p-1.5 rounded-lg bg-blue-105 text-blue-700">
+                  <h3 className="text-lg font-black text-white flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-slate-900 text-cyan-400">
                       {React.createElement(selectedTool.icon, { className: "h-5 w-5" })}
                     </span>
                     {selectedTool.title}
