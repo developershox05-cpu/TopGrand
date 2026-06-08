@@ -53,11 +53,13 @@ service cloud.firestore {
 
     // Match rules
     match /users/{userId} {
-      allow get, write: if isOwner(userId) && isValidUser(incoming());
+      allow get: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUser(incoming());
       allow read: if isOwner(userId);
 
       match /usage/{toolKey} {
-        allow get, write: if isOwner(userId) && isValidId(toolKey) && isValidUsageLog(incoming());
+        allow get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(toolKey) && isValidUsageLog(incoming());
         allow read: if isOwner(userId);
       }
     }
