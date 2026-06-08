@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, Check, X, ShieldAlert, Sparkles, Send } from 'lucide-react';
+import { Mail, Lock, User, Check, X, ShieldAlert, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface AuthModalProps {
@@ -10,17 +10,14 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthModalProps) {
-  const [mode, setMode] = useState<'login' | 'register' | 'verify'>((initialMode as any));
+  const [mode, setMode] = useState<'login' | 'register'>((initialMode as any) === 'verify' ? 'register' : initialMode);
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [generatedCode, setGeneratedCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
   if (!isOpen) return null;
 
@@ -34,7 +31,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     }
 
     if (password !== confirmPassword) {
-      setError("Parollar bir-biriga mos kelmadi.");
+      setError("Parollar bir-biriga mos kemadi.");
       return;
     }
 
@@ -59,38 +56,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       setError("Ro'yxatdan o'tishda xatolik yuz berdi. Qaytadan urinib ko'ring.");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleVerify = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!verificationCode) {
-      setError("Iltimos, tasdiqlash kodini kiriting.");
-      return;
-    }
-
-    const temp = localStorage.getItem('temp_user');
-    if (temp) {
-      const parsed = JSON.parse(temp);
-      
-      // Allow exact match or master key 123456
-      if (verificationCode !== parsed.code && verificationCode !== "123456") {
-        setError("Tasdiqlash kodi noto'g'ri. Iltimos pochtangizni qaytadan tekshirib ko'ring.");
-        return;
-      }
-
-      // Save permanently
-      localStorage.setItem(`user_${parsed.email}`, JSON.stringify(parsed));
-      // Store current logged-in user
-      localStorage.setItem('current_user', JSON.stringify({ ...parsed, isLoggedIn: true, isPremium: false, usageLog: {} }));
-      
-      onSuccess({ name: parsed.name, surname: parsed.surname, email: parsed.email });
-      onClose();
-    } else {
-      setError("Sessiya muddati tugadi yoki xatolik yuz berdi. Qaytadan ro'yxatdan o'ting.");
-      setMode('register');
     }
   };
 
@@ -123,7 +88,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-950/40 backdrop-blur-md p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-950/45 backdrop-blur-md p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -131,7 +96,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
         className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/20 bg-white/10 p-8 shadow-2xl backdrop-blur-xl"
       >
         {/* Background glow dots */}
-        <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-blue-500/20 blur-2xl"></div>
+        <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-blue-500/20 blur-2xl font-semibold"></div>
         <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-cyan-400/20 blur-2xl"></div>
 
         {/* Close Button */}
@@ -148,14 +113,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
             <Sparkles className="h-6 w-6 text-white" />
           </div>
           <h2 className="mt-4 text-2xl font-bold tracking-tight text-white">
-            {mode === 'login' ? "Xush Kelibsiz" : mode === 'register' ? "Ro'yxatdan O'tish" : "Emailni Tasdiqlash"}
+            {mode === 'login' ? "Xush Kelibsiz" : "Ro'yxatdan O'tish"}
           </h2>
           <p className="text-sm text-blue-200 text-center mt-1">
             {mode === 'login' 
               ? "Akkauntingizga kirib, sun'iy intellekt xizmatlaridan foydalaning" 
-              : mode === 'register' 
-              ? "Platforma imkoniyatlaridan to'liq foydalanish uchun hisob yarating" 
-              : "Email manzilingizni tasdiqlang"}
+              : "Platforma imkoniyatlaridan to'liq foydalanish uchun hisob yarating"}
           </p>
         </div>
 
@@ -163,13 +126,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
           <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-500/20 border border-red-500/30 p-3 text-xs text-red-200" id="auth-err">
             <ShieldAlert className="h-4 w-4 shrink-0" />
             <span>{error}</span>
-          </div>
-        )}
-
-        {successMsg && mode === 'verify' && (
-          <div className="mb-4 flex items-start gap-2 rounded-xl bg-cyan-700/20 border border-cyan-500/30 p-3 text-xs text-cyan-200" id="auth-success">
-            <Send className="h-4 w-4 mt-0.5 shrink-0 animate-bounce" />
-            <span>{successMsg}</span>
           </div>
         )}
 
@@ -319,7 +275,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Kod Yuborilmoqda...
+                    Ro'yxatdan O'tkazilmoqda...
                   </>
                 ) : (
                   <>
@@ -338,41 +294,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                 className="text-xs font-bold text-cyan-400 hover:underline"
               >
                 Kirish
-              </button>
-            </div>
-          </form>
-        )}
-
-        {mode === 'verify' && (
-          <form onSubmit={handleVerify} className="space-y-4" id="form-verify">
-            <div>
-              <label className="block text-xs font-semibold text-blue-200 mb-2 uppercase tracking-wide text-center">Tasdiqlash Kodi</label>
-              <input
-                type="text"
-                required
-                placeholder="Kod (Masalan: 123456)"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
-                maxLength={6}
-                className="w-full text-center text-xl font-bold tracking-widest rounded-xl border border-white/10 bg-white/5 py-3 text-white placeholder-blue-350/40 outline-none focus:border-cyan-400 transition"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg hover:shadow-cyan-500/20 active:scale-[0.98] transition"
-              id="btn-verify-submit"
-            >
-              Kodni Tasdiqlash
-            </button>
-
-            <div className="text-center mt-4">
-              <button
-                type="button"
-                onClick={() => { setMode('register'); setError(''); }}
-                className="text-xs text-blue-200 hover:text-white underline"
-              >
-                Qaytadan ro'yxatdan o'tish
               </button>
             </div>
           </form>
