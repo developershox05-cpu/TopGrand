@@ -123,7 +123,7 @@ export default function App() {
           {[
             { id: 'all', label: 'Universitetlar Katalogi & Qaynoq Takliflar' },
             { id: 'courses', label: 'IELTS & SAT Kurslari' },
-            { id: 'ai', label: 'Chet elga tayyorlov (AI Hub - 14 modullar!)' },
+            { id: 'ai', label: 'Chet elga tayyorlov (AI Hub - 10 ta AI Funksiya)' },
             { id: 'uz', label: '100% Grant Kalkulyatori (20+ Tavsiya!)' },
             { id: 'apply', label: 'Universitetlarga Topshirish' }
           ].map((nav) => (
@@ -238,11 +238,11 @@ export default function App() {
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 shrink-0" />
-                    <span>Hamma 20+ Premium universitet hisobotlariga to'liq kirish</span>
+                    <span>Hamma 20+ Premium universitet xizmatlariga to'liq kirish</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 shrink-0" />
-                    <span>Daxshatli 14 ta AI metodistlaridan 24soatlik cheklovsiz foydalanish</span>
+                    <span>Daxshatli 10 ta AI funksiyalaridan 24 soatlik cheklovsiz foydalanish</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 shrink-0" />

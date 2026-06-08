@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, Check, X, ShieldAlert, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (userData: { name: string; surname: string; email: string }) => void;
+  onSuccess: (userData: { id: string; name: string; surname: string; email: string; isPremium: boolean }) => void;
   initialMode?: 'login' | 'register';
 }
 
@@ -31,7 +37,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     }
 
     if (password !== confirmPassword) {
-      setError("Parollar bir-biriga mos kemadi.");
+      setError("Parollar bir-biriga mos kelmadi.");
       return;
     }
 
@@ -43,23 +49,41 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     setIsLoading(true);
 
     try {
-      const newUser = { name, surname, email, password, isPremium: false, usageLog: {} };
-      // Save permanently in localStorage
-      localStorage.setItem(`user_${email}`, JSON.stringify(newUser));
-      // Store current logged-in user
-      localStorage.setItem('current_user', JSON.stringify({ ...newUser, isLoggedIn: true }));
+      // Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
       
-      onSuccess({ name, surname, email });
+      const userProfile = {
+        id: user.uid,
+        name,
+        surname,
+        email,
+        isPremium: false
+      };
+
+      // Save user profile in Firestore
+      await setDoc(doc(db, "users", user.uid), userProfile);
+
+      // Save user temporarily in LocalStorage too
+      localStorage.setItem('current_user', JSON.stringify({ ...userProfile, isLoggedIn: true, usageLog: {} }));
+
+      onSuccess(userProfile);
       onClose();
     } catch (err: any) {
       console.error(err);
-      setError("Ro'yxatdan o'tishda xatolik yuz berdi. Qaytadan urinib ko'ring.");
+      if (err.code === 'auth/email-already-in-use') {
+        setError("Ushbu email allaqachon ro'yxatdan o'tkazilgan.");
+      } else if (err.code === 'auth/weak-password') {
+        setError("Parol juda zaif. Kamida 6 ta belgi kiriting.");
+      } else {
+        setError(err.message || "Ro'yxatdan o'tishda xatolik yuz berdi.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -68,23 +92,59 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       return;
     }
 
-    // Try finding user by email
-    const stored = localStorage.getItem(`user_${email}`);
-    if (!stored) {
-      setError("Ushbu email bilan ro'yxatdan o'tgan foydalanuvchi topilmadi.");
-      return;
-    }
+    setIsLoading(true);
 
-    const parsed = JSON.parse(stored);
-    if (parsed.password !== password) {
-      setError("Noto'g'ri parol kiritildi. Qaytadan urinib ko'ring.");
-      return;
-    }
+    try {
+      // Sign in via Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-    // Login success
-    localStorage.setItem('current_user', JSON.stringify({ ...parsed, isLoggedIn: true, isPremium: parsed.isPremium || false, usageLog: parsed.usageLog || {} }));
-    onSuccess({ name: parsed.name, surname: parsed.surname, email: parsed.email });
-    onClose();
+      // Read from Firestore
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      let nameVal = "Talaba";
+      let surnameVal = "";
+      let premiumVal = false;
+
+      if (userDocSnap.exists()) {
+        const data = userDocSnap.data();
+        nameVal = data.name || "Talaba";
+        surnameVal = data.surname || "";
+        premiumVal = data.isPremium || false;
+      } else {
+        // If not exists, restore or backfill
+        const fallbackProfile = {
+          id: user.uid,
+          name: "Talaba",
+          surname: "",
+          email: user.email || email,
+          isPremium: false
+        };
+        await setDoc(userDocRef, fallbackProfile);
+      }
+
+      const activeProfile = {
+        id: user.uid,
+        name: nameVal,
+        surname: surnameVal,
+        email: user.email || email,
+        isPremium: premiumVal
+      };
+
+      localStorage.setItem('current_user', JSON.stringify({ ...activeProfile, isLoggedIn: true, usageLog: {} }));
+      onSuccess(activeProfile);
+      onClose();
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        setError("Email yoki parol noto'g'ri kiritildi.");
+      } else {
+        setError("Kirishda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -102,7 +162,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-blue-200 hover:text-white hover:bg-white/10 p-1.5 rounded-full transition-colors"
+          className="absolute top-4 right-4 text-blue-200 hover:text-white hover:bg-white/10 p-1.5 rounded-full transition-colors cursor-pointer"
           id="btn-close-auth"
         >
           <X className="h-5 w-5" />
@@ -140,6 +200,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                   required
                   placeholder="name@example.com"
                   value={email}
+                  disabled={isLoading}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-11 pr-4 text-sm text-white placeholder-blue-300/50 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition"
                 />
@@ -155,6 +216,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                   required
                   placeholder="••••••••"
                   value={password}
+                  disabled={isLoading}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-11 pr-4 text-sm text-white placeholder-blue-300/50 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition"
                 />
@@ -163,13 +225,26 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
 
             <button
               type="submit"
-              className="mt-2 w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 font-semibold text-white shadow-lg hover:shadow-cyan-500/20 active:scale-[0.98] transition duration-150 relative overflow-hidden group"
+              disabled={isLoading}
+              className="mt-2 w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 font-semibold text-white shadow-lg hover:shadow-cyan-500/20 active:scale-[0.98] transition duration-150 relative overflow-hidden group cursor-pointer"
               id="btn-login-submit"
             >
               <span className="relative z-10 flex items-center justify-center gap-1.5">
-                Kirish <Check className="h-4 w-4" />
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Kirilmoqda...
+                  </>
+                ) : (
+                  <>
+                    Kirish <Check className="h-4 w-4" />
+                  </>
+                )}
               </span>
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-transform duration-300 group-hover:translate-x-0"></div>
+              {!isLoading && <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-transform duration-300 group-hover:translate-x-0"></div>}
             </button>
 
             <div className="text-center mt-4">
@@ -177,7 +252,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
               <button
                 type="button"
                 onClick={() => { setMode('register'); setError(''); }}
-                className="text-xs font-bold text-cyan-400 hover:underline"
+                className="text-xs font-bold text-cyan-400 hover:underline cursor-pointer"
               >
                 Ro'yxatdan o'tish
               </button>
@@ -197,6 +272,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                     required
                     placeholder="Ismingiz"
                     value={name}
+                    disabled={isLoading}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-9 pr-3 text-sm text-white placeholder-blue-300/50 outline-none focus:border-cyan-400 transition"
                   />
@@ -211,6 +287,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                     required
                     placeholder="Familiyangiz"
                     value={surname}
+                    disabled={isLoading}
                     onChange={(e) => setSurname(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-9 pr-3 text-sm text-white placeholder-blue-300/50 outline-none focus:border-cyan-400 transition"
                   />
@@ -227,6 +304,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                   required
                   placeholder="name@example.com"
                   value={email}
+                  disabled={isLoading}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-9 pr-3 text-sm text-white placeholder-blue-300/50 outline-none focus:border-cyan-400 transition"
                 />
@@ -241,6 +319,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                   required
                   placeholder="Kamida 6 belgi"
                   value={password}
+                  disabled={isLoading}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-3.5 text-sm text-white placeholder-blue-300/50 outline-none focus:border-cyan-400 transition"
                 />
@@ -252,6 +331,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                   required
                   placeholder="Parolni takrorlang"
                   value={confirmPassword}
+                  disabled={isLoading}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-3.5 text-sm text-white placeholder-blue-300/50 outline-none focus:border-cyan-400 transition"
                 />
@@ -261,7 +341,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
             <button
               type="submit"
               disabled={isLoading}
-              className={`mt-2 w-full py-3 rounded-xl font-semibold text-white shadow-lg transition duration-150 relative overflow-hidden group ${
+              className={`mt-2 w-full py-3 rounded-xl font-semibold text-white shadow-lg transition duration-150 relative overflow-hidden group cursor-pointer ${
                 isLoading 
                   ? "bg-slate-700/50 cursor-not-allowed opacity-80 border border-white/5" 
                   : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:shadow-cyan-500/20 active:scale-[0.98]"
@@ -291,7 +371,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
               <button
                 type="button"
                 onClick={() => { setMode('login'); setError(''); }}
-                className="text-xs font-bold text-cyan-400 hover:underline"
+                className="text-xs font-bold text-cyan-400 hover:underline cursor-pointer"
               >
                 Kirish
               </button>

@@ -118,7 +118,7 @@ app.post("/api/auth/send-code", async (req, res) => {
   }
 });
 
-// Main AI Central Processing Endpoint for ALL 20-Vip Ivy Suite Tools
+// Main AI Central Processing Endpoint for the 10 Core AI Functions
 app.post("/api/ai/generate", async (req, res) => {
   const { toolType, inputData, userContext } = req.body;
 
@@ -130,289 +130,277 @@ app.post("/api/ai/generate", async (req, res) => {
   let prompt = "";
 
   const userName = userContext?.name ? `${userContext.name} ${userContext?.surname || ""}` : "Talaba";
+  const userPremium = userContext?.isPremium || false;
 
-  // Configuration mapping for every single one of the 20 tools
+  // Configuration mapping for clean 10 tools
   switch (toolType) {
-    case "essay":
-      systemInstruction = "Siz xalqaro darajadagi akademik insho analitigi va IELTS/SAT Writing bo'yicha Senior Examiner'siniz. Berilgan inshoni grammatika, so'z boyligi, mantiqiy tuzilish (coherence/cohesion) va topshiriq mosligi bo'yicha o'ta tanqidiy tahlil qiling. O'zbek tilida aniq misollar bilan kamchiliklarni tushuntiring, taxminiy IELTS Band score (1-9) yoki SAT Writing score qo'ying va inshoni 8.5+ darajaga chiqarish bo'yicha 3 ta amaliy maslahat bering.";
-      prompt = `Foydalanuvchi inshosi: ${inputData?.essayText || ""}\nMavzu (agar kiritilgan bo'lsa): ${inputData?.topic || "Ixtiyoriy"}`;
+    case "profile_weakness_auditor":
+      systemInstruction = "Siz elita 'Profile Weakness Auditor' mutaxassisiz. Talabaning kiritgan GPA, IELTS va yutuqlari orasidagi eng xavfli va zaif joyni ('red flag') aniqlab bering. Bepul rejada umumiy 2 ta xatoni ko'rsating. PRO rejada ushbu xatalarni 1 oy ichida bartaraf etish rejasini (Yo'l xaritasi) yozing.";
+      prompt = `Talaba ismi: ${userName}\nGPA: ${inputData?.gpa || ""}\nIELTS score: ${inputData?.ielts_score || ""}\nYutuqlar: ${inputData?.accomplishments || ""}\nProfil maqomi: ${userPremium ? "PRO" : "FREE"}`;
       break;
 
-    case "interview":
-      systemInstruction = "Siz Harvard, Oxford kabi eng nufuzli jahon universitetlarining qabul komissiyasi bosh suhbatdoshi (Admission Interviewer) vazifasidasiz. Qisqa, lo'nda, samimiy gapiring. Talabaning ingliz/o'zbek tilidagi javoblarini mantiqan baholang va uni yanada chuqurlashtiruvchi keyingi g'ayrioddiy, daxshatli qiziqarli savolni o'zbek tilida bering.";
-      prompt = `Talaba ismi: ${userName}\nSuhbat ixtisosligi: ${inputData?.major || "IT & Biznes"}\nSuhbat tarixi: ${JSON.stringify(inputData?.history || [])}`;
+    case "reverse_scholarship":
+      systemInstruction = "Siz xalqaro 'Reverse Scholarship Calculator' tizimisiz. Talabaning oilaviy daromadi, o'zi to'lay oladigan summa va mo'ljaliga qarab, dunyodagi 50+ dan ortiq nufuzli grantlardan (masalan, DAAD, DSU Italiya, Turkiye Burslari, MEXT Yaponiya, CSC Xitoy, GKS Koreya) unga to'g'ri keluvchilarini hisoblab bering. Bepul foydalanuvchiga faqat 2 ta grant nomini ayting. PRO foydalanuvchiga esa grantlarning rasmiy havolalarini, ro'yxatdan o'tish kalendarini hamda muddatlarini jadval shaklida chiqaring.";
+      prompt = `Talaba ismi: ${userName}\nOilaviy yillik daromad: ${inputData?.annual_income || ""}\nOila to'lay oladigan yillik summa: ${inputData?.max_affordable || ""}\nProfil maqomi: ${userPremium ? "PRO" : "FREE"}`;
       break;
 
-    case "autopilot":
-      systemInstruction = "Siz universitet arizalari bo'yicha to'liq avtomatik maslahatchisiz. Talaba kiritgan orzudagi oliygoh va uning yo'nalishi asosida qadam-baqadam arizani muvaffaqiyatli to'ldirish, qabul jarayonlari portalidagi bosqichlar va profilni unikal qilish sirlarini o'zbek tilida mukammal taqdim eting.";
-      prompt = `Maqsadli universitet: ${inputData?.targetUniversity || ""}\nHujjat/reja matni: ${inputData?.sopText || ""}`;
+    case "cv_builder":
+      systemInstruction = "Siz elita 'AI Smart Resume Builder' tizimisiz. Talabaning tartibsiz kiritgan yutuqlari va maktab faoliyatlarini Harvard akademik standarti bo'yicha mukammal rezyumega (Professional Summary, Education, Experience, Extras, Skills) ingliz tilida o'tkazing. Bepul reja uchun matnni ekranga bering. PRO foydalanuvchi variantida uni daxshatli va to'liq formatda taqdim eting, PDF yuklashga tayyor ekanini eslatib bering.";
+      prompt = `Talaba ismi: ${userName}\nYutuqlari va tartibsiz ma'lumotlari: ${inputData?.rough_experience || ""}\nProfil maqomi: ${userPremium ? "PRO" : "FREE"}`;
       break;
 
-    case "dark_crawler":
-      systemInstruction = "Siz xususiy va ochiq bo'lmagan, universitet ichki grantlari hamda maxsus fond stipendiyalarini topish bo'yicha daxshatli izquvarsiz. Talabaning maqsadli davlati va sohasi bo'yicha uchinchi shaxslar bilmaydigan, kamchiliklar o'rtasida ommalashmagan grant manbalarini va ulardan pul olish strategiyasisini batafsil o'zbekcha yozib bering.";
-      prompt = `Maqsadli davlat: ${inputData?.country || ""}\nSoha: ${inputData?.major || ""}`;
+    case "sop_critic":
+      systemInstruction = "Siz qattiqqo'l 'Statement of Purpose (SoP) Critic' professorisiz. Talaba yozgan inshodagi mantiqiy zaif jumlalarni va darslik klishelarini tahlil qiling. Bepul foydalanuvchi uchun faqatgina birinchi 200 ta so'zni tahlil qiling. PRO foydalanuvchi uchun to'liq inshoni baholab, foyda-zararini ko'rsatib, uning universitetga kirish imkoniyatini 1 dan 10 ballgacha baholang va xatolarni qizil zona sifatida ko'rsating.";
+      prompt = `Talaba ismi: ${userName}\nTarget Major: ${inputData?.target_major || ""}\nInsho matni: ${inputData?.essay_text || ""}\nProfil maqomi: ${userPremium ? "PRO" : "FREE"}`;
       break;
 
-    case "kvant_matrix":
-      systemInstruction = "Siz inshodagi so'zlarni kognitiv va psixologik tahlil qiluvchi daxshatli lingvistsiz. Insho jumlalarini Harvard/Stanford qabul komiteti ko'zi bilan tahrirlab, oddiy iboralarni ta'sirchan so'z birikmalariga almashtirish bo'yicha o'zbekcha kognitiv optimizatsiya jadvali va tahlil hisobotini bering.";
-      prompt = `Nishondagi universitet: ${inputData?.targetUniversity || ""}\nInsho matni: ${inputData?.essayText || ""}`;
+    case "cold_email_generator":
+      systemInstruction = "Siz 'Cold-Email Sniper' tizimisiz. Professorlarga yoziladigan ta'sirchan maktublarni shakllantirasiz. Bepul reja uchun 1 ta standart andozalik inglizcha xat yozing. PRO reja uchun esa professorning eng so'nggi ilmiy ishiga (student kiritgan) va talaba qiziqishiga moslangan exclusive taklif maktubini tayyorlang.";
+      prompt = `Talaba ismi: ${userName}\nMutaxassislik: ${inputData?.target_major || ""}\nProfessor ismi: ${inputData?.professor_name || ""}\nProfessor qiziqishlari: ${inputData?.professor_interests || ""}\nTalabaning unikal focuses: ${inputData?.student_interest || ""}\nProfil maqomi: ${userPremium ? "PRO" : "FREE"}`;
       break;
 
-    case "prof_matcher":
-      systemInstruction = "Siz professorlar bilan ilmiy hamkorlik o'rnatish sirlarini mukammal biluvchi maslahatchisiz. Talaba kiritgan ma'lumotlar va qiziqishlar asosida unga mos keladigan professorlarni izlash, ularning LinkedIn sahifalarini kuzatish va hamkorlik taklif qilish strategiyalarini o'zbekcha batafsil tushuntiring.";
-      prompt = `Talaba qiziqishlari/ko'nikmalari: ${inputData?.strengths || ""}`;
+    case "lor_enhancer":
+      systemInstruction = "Siz elita 'Recommendation Letter Enhancer' mutaxassisiz. O'qituvchining oddiy ingliz tilidagi tavsiyanomasini g'arbiy universitetlar muloqot va yuqori ilmiy maqullash darajalariga ko'taring. Bepul foydalanuvchiga 1 ta yuksak tahrir bering. PRO foydalanuvchiga esa o'qituvchining 3 xil temperament (Talabchan qattiqqo'l o'qituvchi, Ilmiy rahbar, Maktab direktori) ohangidagi 3 ta unikal variantlarni yozib bering.";
+      prompt = `Talaba ismi: ${userName}\nAsl LOR matni: ${inputData?.simple_lor || ""}\nProfil maqomi: ${userPremium ? "PRO" : "FREE"}`;
       break;
 
-    case "roadmap_gen":
-      systemInstruction = "Siz elita akademik murabbiysiz. Talabaning orzudagi oliygohi, hozirgi sinfi va yutuqlari asosida unga xalqaro universitetda 1-o'ringa chiqib grant yutish uchun daxshatli kuchli 2 yillik mos loyihalar, olimpiadalar va darsdan tashqari premium faoliyat yo'l xaritasini o'zbekcha batafsil tuzib bering.";
-      prompt = `Target oliygoh: ${inputData?.targetUniversity || ""}\nHozirgi sinf: ${inputData?.grade || ""}\nHozirgi bepul ishlari: ${inputData?.history || ""}`;
+    case "mock_interview":
+      systemInstruction = "Siz 'AI Mock Interviewer' universitet suhbat xodimisiz. Savollarga berilgan javoblar tarixiga qarab muomalali, ammo mantiqiy savol bering. Bepul foydalanuvchi uchun 2 tadan ortiq savol bemalol bermang, so'ng to'xtatib PRO rejasiga o'tishni ayting. PRO foydalanuvchiga to'liq 5 ta savol bering va yakunda unga hisobot va ballarini taqdim eting.";
+      prompt = `Talaba ismi: ${userName}\nSuhbat tarixi (History): ${JSON.stringify(inputData?.history || [])}\nFoydalanuvchi xabari: ${inputData?.userMessage || "Suhbatni boshlimiz"}\nProfil maqomi: ${userPremium ? "PRO" : "FREE"}`;
       break;
 
-    case "cold_email":
-      systemInstruction = "Siz professorlarga, laboratoriyalarga yoki grant komissiyalariga yo'llaniladigan sovuq xatlar (cold email) bo'yicha eng zo'r mutaxassissiz. Professor yuragidan uradigan daxshatli professional, unikal cold-email xati namunasini ingliz tilida, uning mazmunini va qanday yuborish sirlarini o'zbek tilida yozib bering.";
-      prompt = `Professor ma'lumotlari: ${inputData?.recommenderRole || ""}\nProfessor tadqiqot sohasi: ${inputData?.strengths || ""}`;
+    case "ielts_speaking_partner":
+      systemInstruction = "Siz xalqaro darajadagi 'IELTS Speaking Partner' imtihonchisiz. Bepul reja doirasida talaba javobini baholab, 1 ta xatosini aytib to'xtating. PRO mijozi uchun gaplarini 7.5+ band darajadagi oliy akademik frazalar va advanced so'z birikmalari bilan qaytadan (rephrase) yozib bering va til ravonligi jadvalini tuzing.";
+      prompt = `Talaba ismi: ${userName}\nSuhbat tarixi (History): ${JSON.stringify(inputData?.history || [])}\nFoydalanuvchi xabari: ${inputData?.userMessage || "IELTS Speak Part 2"}\nProfil maqomi: ${userPremium ? "PRO" : "FREE"}`;
       break;
 
-    case "lor_generator":
-      systemInstruction = "Siz o'ta nufuzli akademik rahbar yoki professorsiz. Universitet qabul komissiyasini hayratda qoldiradigan mukammal va daxshatli kuchli inglizcha Tavsiyanoma (Letter of Recommendation - LOR) matnini yozib bering. Har bitta gapida talabaning noyobligini namoyish etib o'zbekcha mantiqiy maslahatlar ilova qiling.";
-      prompt = `Tavsiya beruvchi roli: ${inputData?.recommenderRole || ""}\nTalabaning eng katta yutuqlari: ${inputData?.strengths || ""}`;
+    case "activity_translator":
+      systemInstruction = "Siz 'Extracurricular Activity Translator' mutaxassisiz. Talabaning oddiy, sodda tilda kiritgan to'garak va qiziqishlarini Common App faoliyatlar ro'yxati (Activity List - 150 tagacha belgi) formatiga mos chiroyli inglizcha ifodalarga o'tkazing. Bepul foydalanuvchiga faqat 2 tasini tahrir qiling. PRO foydalanuvchiga 10 tagacha faoliyatni tartibli, ta'sirchan liderlik tili bilan tizimlashtiring.";
+      prompt = `Talaba ismi: ${userName}\nSodda faoliyatlar ro'yxati: ${inputData?.simple_hobbies || ""}\nProfil maqomi: ${userPremium ? "PRO" : "FREE"}`;
       break;
 
-    case "motivation_generator":
-      systemInstruction = "Siz dunyo darajasidagi motivatsiya insholari muharririsiz. Qiziqayotgan soha, orzudagi oliygoh va shaxsiy xislatlar asosida dunyo standartiga 100% mos keladigan premium inglizcha Motivatsiya xati (Statement of Purpose / Personal Statement) matnini darslik kabi mukammal yozib bering. Eng muhim joylariga o'zbekcha maslahat bering.";
-      prompt = `Maqsadli o'quv yurti: ${inputData?.targetUniversity || ""}\nMutaxassislik falsafasi: ${inputData?.skillsMajor || ""}\nInsho Ohangi: ${inputData?.tone || "Professional va samimiy"}`;
-      break;
-
-    case "financial_aid":
-      systemInstruction = "Siz universitetlarning moliyaviy yordam (Financial Aid/CSS Profile) bo'yicha eng tajribali ekspertisiz. Talabaning yillik oilaviy daromadi, kutilayotgan budjet va maqsadli davlati asosida qanday qilib 100% to'liq moliya yordami olish rejasini va CSS Profile to'ldirish sirlarini o'zbekcha tushuntiring.";
-      prompt = `Oilaviy daromad: ${inputData?.topic || ""}\nMaqsadli davlat: ${inputData?.country || ""}`;
-      break;
-
-    case "visa_sop":
-      systemInstruction = "Siz elchixonalarda viza maslahat tahlilchisiz. Talaba topshirayotgan davlat vizasi, kelajak rejasi va moliyaviy holati asosida elchi rad javobi berish xavfini (Visa Refusal Risk) baholang, qizil zonalarni aniqlang va qaytib kelish isbotini (Home Ties) kuchaytirish bo'yicha professional o'zbekcha yo'riqlar bering.";
-      prompt = `Topshirilayotgan viza davlati: ${inputData?.country || ""}\nMablag' va reja tafsiloti: ${inputData?.sopText || ""}`;
-      break;
-
-    case "scholarship_matcher":
-      systemInstruction = "Siz global grantlar va hukumat stipendiyalari bo'yicha eng zo'r tahlilchisiz. Yoshi, o'rtacha bahosi (GPA), til ballari (IELTS/SAT) va sohasi asosida u mos keladigan top stipendiyalar (GKS, DSU, CSC, Stipendium Hungaricum, Turkiye Burslari va xususiy fondlar) ro'yxatini va strategiyani o'zbekcha mukammal bering.";
-      prompt = `Yosh: ${inputData?.age || ""}\nGPA: ${inputData?.gpa || ""}\nTil sertifikatlari: ${inputData?.languageScore || ""}\nSoha: ${inputData?.major || ""}`;
-      break;
-
-    case "deadline":
-      systemInstruction = "Siz vaqt boshqaruvi va o'quv rejalashtirish bo'yicha daxshatli tajribali mutaxassissiz. Talabaning maqsad qilgan oliygohlari, imtihonlari va qolgan vaqtiga qarab unga stressiz, mukammal soatbay va haftalik avtomatik reja taqvimi (calendar plan) va rejasini o'zbek tilida taqdim eting.";
-      prompt = `Maqsadlar: ${inputData?.targetUniversity || ""}\nQolgan tayyorgarlik muddati: ${inputData?.timeLeft || ""}`;
-      break;
-
-    case "gap_year":
-      systemInstruction = "Siz Gap-year (bo'sh yil) bo'yicha tajribali murabbiysiz. Agar bu yil oliygohga kirmagan bo'lsa, kelasi yili nufuzli joylarga 200% kafolatli kirish imkonini beruvchi startaplar, portfolioni boyituvchi loyihalar va amaliyotlar rejasini o'zbek tilida taqdim eting.";
-      prompt = `Dars va yo'nalishlar: ${inputData?.major || ""}\nNima uchun kira olmagani tahlili: ${inputData?.history || ""}`;
-      break;
-
-    case "score_predictor":
-      systemInstruction = "Siz SAT va IELTS natijalarini prognoz qiluvchi va tahlil qiluvchi daxshatli murabbiysiz. Talabaning hozirgi mock test ballarini olib, uning imtihon kunigacha bo'lgan zaif nuqtalarini bartaraf etuvchi strategiya va yakuniy ball uchun prognoz tuzib bering.";
-      prompt = `Hozirgi Mock IELTS / SAT ballari: ${inputData?.currentScore || ""}\nMaqsadli ball: ${inputData?.targetScore || ""}\nImtihongacha qolgan vaqt: ${inputData?.timeLeft || ""}`;
-      break;
-
-    case "culture":
-      systemInstruction = "Siz universitet sotsiologi va xalqaro ijtimoiy adaptatsiya mutaxassisisiz. Talabaning hayot tarzi, shaxsiy qiziqishlari, ob-havo imtiyozlari va xarakteriga mos keladigan top universitetlar madaniyatini va moslashish qoidalarini o'zbekcha yozib bering.";
-      prompt = `Ideal muhit: ${inputData?.topic || ""}\nHobbilar va ijtimoiy qiziqishlar: ${inputData?.hobbies || ""}`;
-      break;
-
-    case "translator":
-      systemInstruction = "Siz xalqaro akademik hujjat tarjimoni va termin tahlilchisiz. Akademik hujjatlar tarjimasi, fanlar nomlari xalqaro qabul talablariga mosligini tekshirib, xatolar bo'lsa hisobot qilib bering.";
-      prompt = `Matn yoki terminlar: ${inputData?.sopText || ""}`;
-      break;
-
-    case "networking":
-      systemInstruction = "Siz LinkedIn va professional netvorking tarmog'i ustasisiz. Nishondagi universitet bitiruvchilariga, xodimlariga va vakillariga yozish uchun maxsus tayyorlangan inglizcha shablonlar va o'zbek tilidagi qimmatli aloqa sirlarini taqdim eting.";
-      prompt = `Target oliygoh: ${inputData?.targetUniversity || ""}\nMutaxassislik sohasi: ${inputData?.major || ""}`;
-      break;
-
-    case "chat":
-      systemInstruction = "Siz TopGrand platformasining xalqaro oliygohlar, grantlar va viza masalalari bo'yicha daxshatli tajribali sun'iy intellekt maslahatchisisiz. Talabaning har qanday savoliga o'zbek tilida juda aniq, real, unikal va foydali ma'lumotlarni berib hisobot tayyorlang.";
-      prompt = `Talabaning ismi: ${userName}\nSavol: ${inputData?.userMessage || "Xalqaro grantlar haqida qisqacha ma'lumot bering."}`;
+    case "rejection_appeal":
+      systemInstruction = "Siz 'Rejection Appeal Writer' huquqiy va akademik strategisiz. Universitet rad xatidagi kamchiliklarni daxshatli tahlil qiling. Bepul reja uchun ushbu xizmat qulflanganligini bildiring. PRO foydalanuvchi uchun esa rad javobini bevosita inkor qilib, qabul qarorini qayta ko'rib chiqishga majburlaydigan ta'sirchan, rasmiy Apellyatsiya (Appeal) xati yozing.";
+      prompt = `Talaba ismi: ${userName}\nRejection Letter matni: ${inputData?.rejection_letter || ""}\nProfil maqomi: ${userPremium ? "PRO" : "FREE"}`;
       break;
 
     default:
       return res.status(400).json({ error: "Noma'lum toolType parametrlari." });
   }
 
-  // Resilient High-Fidelity Uzbek Simulation generator in case the API Key is invalid/blocked/restricted
-  const generateSimulatedResponse = (tool: string, data: any) => {
+  // Resilient High-Fidelity Uzbek Simulation generator in case the Gemini API Key limits out or has issue
+  const generateSimulatedResponse = (tool: string, premium: boolean) => {
     switch (tool) {
-      case "essay":
-        return `📝 **IELTS / SAT Akademik Insho Tahlili Natijasi**
-**Taxminiy Band Score (IELTS):** 7.0 / 9.0
+      case "profile_weakness_auditor":
+        if (premium) {
+          return `🛑 **TopGrand PROFILE WEAKNESS AUDITOR (PRO Tahlil)**
 
-**1. Kriteriyalar bo'yicha tahlil:**
-* **Task Achievement (Vazifaga muvofiqlik) - [7.0]:** Insho mavzusi qisman to'liq ochilgan. Muallif o'z nuqtai nazarini mantiqiy misollar bilan isbotlay olgan.
-* **Coherence & Cohesion (Mantiqiy izchillik) - [7.5]:** Paragraflarga bo'linish munosib. "Furthermore", "In contrast" kabi bog'lovchi iboralar ishlatilgan.
-* **Lexical Resource (So'z boyligi) - [7.0]:** Akademik so'z boyligini oshirish tavsiya qilinadi. "Invaluable", "Detrimental", "Paramount" kabi so'zlarni ko'proq ishlating.
+Sizning profilingizdagi eng katta **2 ta Qizil Nuqta (Red Flags)** topildi:
+1. **Sinfdan tashqari faoliyatning (Extracurriculars) sustligi**: Olimpiada yoki yirik ijtimoiy loyihalar yetarli emas.
+2. **SOP dagi andozaviylik**: Motivatsiya xatingiz an'anaviy ravishda yozilgan.
 
-**2. Aniqlangan anatomik xatolar va ularning to'g'rilangan variantlari:**
-* *Xato:* "...which is affect the student's motivation..."
-* *Tuzatilgan variant:* "...which affects the student's motivation..." (Infinitive oldidan ortiqcha "is" tushib qolishi lozim).
+📈 **Siz uchuun 1 Oylik Shoshilinch Yo'l Xaritasi (Action Plan):**
+* **1-10 Kun:** Mahalliy hududingizda 1 ta STEM to'garagi yoki bolalar uchun bepul matematika dars guruhini tashkil eting (Impact logs to'plang).
+* **11-20 Kun:** Ushbu faoliyatni o'z rezyumeingizga 'STEM Outreach Organizer' deb qo'shib, Harvard standartiga keltiring.
+* **21-30 Kun:** SOP inshongizni "Anti-AI Humanizer" yordamida qaytadan, daxshatli ehtirosli hikoyaga soling va topshiring. Bu sizning imkoniyatingizni **85% ga oshiradi!**`;
+        } else {
+          return `🛑 **TopGrand PROFILE WEAKNESS AUDITOR (Bepul Tahlil)**
 
-**3. Inshoni 8.5+ darajaga chiqarish bo'yicha tavsiyalar:**
-* Collocations (so'z birikmalari) va idiomatik iboralardan ko'proq foydalaning.
-* Inshoning kirish qismida tezis (thesis statement) gapini yanada kuchliroq qiling.`;
+Sizning profilingiz kognitiv tahlil qilindi. Aniqlangan **2 ta asosiy xato:**
+1. **Akademik yutuqlar kamligi**: IELTS kabi til ballaringiz yetarli, lekin ijtimoiy amaliyotingiz yetishmaydi.
+2. **Klishelangan insho boshlanishi**: Inshoingiz an'anaviy gaplar bilan boshlangan.
 
-      case "interview":
-        return `🎓 **TopGrand Qabul Komissiyasi Raisi:**
-Assalomu alaykum, hurmatli **${userName}**! Sizning professional javobingiz tahlil qilinmoqda:
+*Siz bepul reja limitidasiz. Ushbu xatoliklarni bartaraf etishning 1 oylik maxsus yo'l xaritasini olish uchun **PRO** obunani faollashtiring.*`;
+        }
 
-*Sizning javobingiz bahosi:* Bizga sizning sohadagi amaliy ishlaringiz juda yoqdi. Akademik uslub va gaplarni yetkazib berish darajasi yuqori.
+      case "reverse_scholarship":
+        if (premium) {
+          return `🧮 **TopGrand REVERSE SCHOLARSHIP CALCULATOR (PRO Taqvim)**
 
-Suhbatni yanada chuqurlashtirish uchun sizga keyingi daxshatli savolimizni bermoqchimiz:
-**"Kelajakda ushbu universitetda o'qish jarayonida darsdan tashqari qanday global startap yoki ijtimoiy loyiha yaratish orqali jamiyatga yordam bermoqchisiz?"**
-*Javobingizni pastdagi oynaga o'zbek tilida yozing.*`;
+Yillik yordam summasiga asosan tavsiya etiladigan **Top-5 Mukammal Grantlar:**
 
-      case "chat":
-        return `👋 Assalomu alaykum, **${userName}**! Men TopGrand platformasining xalqaro oliygohlar va grantlar bo'yicha sun'iy intellekt maslahatchisiman.
+| Grant Nomi | Davlat | Qamrovi / Maoshi | Hujjatlar Topshirish Muddatlari | Rasmiy Havola |
+| :--- | :--- | :--- | :--- | :--- |
+| **DSU Regional Grant** | Italiya | 100% Kontrakt + Yillik €6,800 + 1 mahal ovqat | 15-Avgust | [it-dsu-portal.gov.it] |
+| **DAAD Scholarship** | Germaniya | €934 oylik stipendiya + sug'urta + yo'l | 15-Oktabr | [daad.de/scholarships] |
+| **GKS Academic Program** | Janubiy Koreya | 100% Be'pul ta'lim + €800 oylik | 15-Mart | [studyinkorea.go.kr] |
+| **CSC Scholarship** | Xitoy | 100% Bepul o'qish + Yotoqxona + 3000 RMB | 30-Aprel | [campuschina.org] |
+| **Turkiye Burslari** | Turkiya | 100% Bepul kontrakt + turk tili kursi | 20-Fevral | [turkiyeburslari.gov.tr] |`;
+        } else {
+          return `🧮 **TopGrand REVERSE SCHOLARSHIP CALCULATOR (Bepul Taqson)**
 
-Siz bergan savol bo'yicha tahlillarim:
-1. **Soliq va grant imkoniyatlari**: GPA ko'rsatgichingizga mos ravishda 100% lik bepul o'qish imkoniyatlarini bevosita topshirishingiz mumkin.
-2. **Hujjatlarni tayyorlash**: Portfelimizdagi boshqa AI vositalari (LOR generator, CV optimizer) yordamida hujjatlaringizni mukammal holatga keltiring.
+Sizning moliyaviy ssenariyingizga mos keladigan **2 ta eng yaxshi grant:**
+1. **DSU Regional Scolarship (Italiya)**: Universitet to'lovidan to'liq ozod qiladi hamda tejamkor talaba uchun ideal.
+2. **DAAD Study Scholarship (Germaniya)**: 100% bepul mutaxassislik ta'limini kafolatlaydi.
 
-Murojaatingiz bo'yicha qo'shimcha qanday aniq savolingiz yoki xavotiringiz bor? Bizga batafsil yozib savollar bering!`;
+*Ushbu grantlarning rasmiy ulanish havolalarini, batafsil qabul kalendarlarini va topshirish muddatlari jadvalini ko'rish uchun **PRO** obunaga o'ting.*`;
+        }
 
-      case "autopilot":
-        return `🤖 **TopGrand Application Autopilot Yo'riqnomasi**
-**Maqsadli oliygoh:** ${data?.targetUniversity || "Stanford/Oxford"}
+      case "cv_builder":
+        return `👔 **AI SMART RESUME — Harvard Standatidagi Akademik CV**
+        
+**[Professional Statement]**
+Highly analytical and STEM-focused student with a proven academic record in high-level mathematical calculations and localized digital mentoring initiatives. Demonstrated leadership capacity by managing localized communities and driving peer-led educational workshops.
 
-**Siz uchun Qadam-baqadam Harakat Rejasi:**
-1. **CommonApp / UCAS Ro'yxatdan o'tish:** Profilingizni oching va "International student" shartlarini to'ldiring.
-2. **SOP Integratsiyasi:** Inshongizni tegishli bo'limga yuklashda satrlar uzunligiga e'tibor bering.
-3. **Application Fee Waiver:** Moliyaviy qiyinchilik sababli hujjat topshirish bepulligini so'rash xati shablonini yuklang.`;
+**[Education]**
+* High School Academic Diploma — GPA: 4.90 / 5.00 (Distinction)
+* Key Coursework: Advanced Mathematics, Physics, English Linguistics
 
-      case "dark_crawler":
-        return `🔍 **Yashirin Ichki Grantlar va Stipendiyalar Hisoboti**
-**Maqsadli Hudud:** ${data?.country || "Yevropa/AQSh"}
+**[Extracurricular Experience]**
+* **Student Network Lead & STEM Coordinator**
+  * Engineered and executed a regional peer-to-peer tutoring program, delivering algebra instruction to 25+ peers.
+  * Raised average test scores by 18% through interactive teaching modules.
+  * Maintained digital logs and compiled student success metrics.
 
-*Siz uchun kamchiliklar bilmaydigan top o'qish grantlari:*
-1. **Xususiy Jamg'arma Stipendiyasi:** Hududiy madaniy grant fondidan yillik bepul yashash xarajati.
-2. **Kafedra Ichki Granti:** Professorning tadqiqot budjeti hisobidan 100% kontrakt qoplamasi.
-3. **Regional DSU/Edisu imkoniyatlari:** Oilaviy daromad kam ko'rsatilganda bepul ovqatlanish va stipendiya bering.`;
+**[Skills]**
+* Languages: Uzbek (Native), English (C1/IELTS 7.0), Russian (B2)
+* Technical: Python, Algorithmic Caching, UI Prototyping
+${premium ? "✨ *PRO formatda PDF yuklash funksiyasi faol.*" : "🔒 *PDF formatda yuklab olish va dizayn andozalarini tanlash uchun PRO rejasiga o'ting.*"}`;
 
-      case "kvant_matrix":
-        return `🧮 **Kvant Kirish Ehtimollari Matritsasi**
-**Nishon:** ${data?.targetUniversity || "Amerika Universitetlari"}
+      case "sop_critic":
+        if (premium) {
+          return `🔴 **SOP PROFESSOR CRITIC (PRO Chuqur Tahlil)**
+          
+**Sizning Universitetga kirish imkoniyatingiz joriy insho bilan:** **7.8 / 10**
 
-**Inshongiz uchun kognitiv so'zlarni almashtirish jadvali:**
-* *Oddiy so'z:* "I want to change the world" → *Oliy so'z:* "I aim to cultivate tangible community-driven solutions."
-* *Oddiy so'z:* "We solved many issues" → *Oliy so'z:* "We systematically mitigated multi-layered impediments."
-* **Ushbu tahrirdan keyingi kirish imkoniyati:** 45% dan 78% ga ko'tarilishi prognoz qilinmoqda!`;
+🚨 **Inshongizdagi Mantiqiy Qizil Zonalar (Cliches and Weaknesses):**
+* *Inshodagi zerikarli jumla:* "Since my childhood, I have always loved computer science because of computers..."
+  ➔ **Nega xavfli:** Juda ko'p takrorlanib charchatgan andoza!
+  ➔ **Tavsiyalangan professional almashtirish:** *"My trajectory inside computational sciences was catalyzed not by passive gameplay, but by an intrinsic fascination with algorithmic efficiency..."*
+  
+* *Xato:* "I want to study at your university because it is very prestigious."
+  ➔ **Yechim:** Oliygoh professorini yoki aniq laboratoriyasini ko'rsating: *"I aim to collaborate under Dr. John Harrison's distributed computing lab, specifically contributing to cloud query optimizations..."*`;
+        } else {
+          return `🔴 **SOP PROFESSOR CRITIC (Free Version)**
+          
+*Sizning inshoingizning dastlabki 200 ta so'zi tahlil qilindi:*
+Insho boshlanishingiz juda sodda ohangda. Qabul komissiyasini jalb qilish uchun his-tuyg'uli voqealardan boshlash lozim. 
 
-      case "prof_matcher":
-        return `💼 **Professorlar bilan Aloqa o'rnatish Strategiyasi**
+*Hujjatning to'liq tahlilini, mantiqiy xatolar va universitetga kirish foizingizni 10 ballik shkalada bilish uchun **PRO** rejasini ko'ring.*`;
+        }
 
-1. **Ilmiy maqolalarni o'rganish:** Professoringizning oxirgi LinkedIn maqoladorligi va izlanishlarini tahrirlang.
-2. **Birinchi Maktub:** "Siz yozgan maqola mening dunyoqarashimni o'zgartirdi" mazmunida muloyim xat yo'llang.
-3. **Hamkorlik:** Professor loyihasida siz bepul yordamchi bo'lishga tayyorligingizni bildiring.`;
+      case "cold_email_generator":
+        if (premium) {
+          return `📨 **COLD-EMAIL SNIPER (PRO Eksklyuziv Xat)**
+          
+**Subject:** Academic Inquiry: Intersecting Research on ${inputData?.professor_interests || "Distributed Databases"}
+          
+Dear Dr. ${inputData?.professor_name || "Harrison"},
 
-      case "roadmap_gen":
-        return `🗺️ **Daxshatli Kuchli 2 Yillik Akademik Shaxsiy Yo'l Xaritasi**
-**Maqsad:** ${data?.targetUniversity || "Nufuzli Jahon Universiteti"}
+I hope this email finds you well. I have been enthusiastically reading your latest scientific breakthrough on ${inputData?.professor_interests || "cloud databases"}, and found your methodology extraordinarily brilliant.
 
-1. **1-Oy - 6-Oy:** IELTS bandini 7.5+ ga ko'tarish va SAT bo'yicha mock testlarni boshlash.
-2. **7-Oy - 12-Oy:** O'zingiz qiziqqan sohada 1 ta amaliy ijtimoiy loyiha (Startap yoki ko'ngillilar faoliyati) yaratish.
-3. **13-Oy - 18-Oy:** Rossiya yoki AQSh xalqaro onlayn kurslaridan (Coursera/edX) sertifikatlar to'plash.
-4. **19-Oy - 24-Oy:** Insholar yozish, LOR to'plash va arizalarni muvaffaqiyatli topshirish.`;
+Specifically, your approach to mitigating digital bottlenecks perfectly aligns with an independent project I have been developing: ${inputData?.student_interest || "database caching networks"}. I would deeply value the opportunity to join your research team as an undergraduate assistant. Would you have 10 minutes for a brief Zoom discussion next Monday at 09:00 AM?
 
-      case "cold_email":
-        return `✉️ **Professorlar uchun Mukammal Cold-Email Namunasi**
+Sincerely,
+${userName}`;
+        } else {
+          return `📨 **COLD-EMAIL SNIPER (Free Standard Template)**
+          
+**Subject:** Inquiry Regarding Undergraduate Research Opportunities
+          
+Dear Professor,
 
-**Subject:** Inquiry regarding Research Opportunities in ${data?.strengths?.slice(0, 30) || "Data Science"}
+I am writing you this email to express my strong interest in joining your research laboratory. I am highly motivated to work under your guidance on advanced STEM projects. I have a solid GPA and a great passion for scientific development.
 
-*Dear Professor,*
-I have recently read your outstanding paper on ${data?.strengths || "this field"} and was highly inspired. I would love to contribute to your research laboratory while pursuing my future studies...
+Thank you for your time.
+          
+Sincerely,
+${userName}
 
-**O'zbekcha Maslahat:** Xatni har kuni ertalab soat 9:00 da (professor davlati vaqti bilan) yuboring. Javob berish ehtimoli daxshatli yuqori bo'ladi!`;
+*Professorning shaxsiy ilmiy ishlariga moslashtirilgan 99% javob beruvchi maxsus maktub olish uchun **PRO** ga o'ting.*`;
+        }
 
-      case "lor_generator":
-        return `🎖️ **Ingliz tilidagi elita Tavsiyanoma (Letter of Recommendation)**
+      case "lor_enhancer":
+        if (premium) {
+          return `✨ **TopGrand RECOMMENDATION LETTER ENHANCER (3 xil ohangda LOR)**
+
+1. 🏛️ **Ohang: TALABCHAN, FUNDAMENTAL O'QITUVCHILING TONI**
+*"I have meticulously monitored ${userName}'s academic performance. They did not merely memorize theorems; instead, they demonstrated deep analytical capacity. I rate their intellectual maturity as exceptional..."*
+
+2. 🧠 **Ohang: ILMIY RAHBAR, TADQIQOTCHI NOHIYaSINING TONI**
+*"As their scientific supervisor, I witnessed ${userName} navigate complex bottlenecks during coding sprints with extreme structural grace..."*
+
+3. 🏫 **Ohang: MAKTAB DIREKTORI / PRINCIPAL TONI**
+*"In my administrative capacity, I can confirm ${userName} represents the highest tier of leadership and social empathy inside our high school community..."*`;
+        } else {
+          return `✨ **TopGrand RECOMMENDATION LETTER ENHANCER (Bepul Standard variant)**
 
 *Dear Admission Committee,*
-It is my absolute privilege to strongly recommend ${userName} for your undergraduate course. As a ${data?.recommenderRole || "Teacher"}, I have mentored countless students, but this student's capability in ${data?.strengths || "academic projects"} stands out remarkably...
+I am pleased to strongly write this recommendation for ${userName}. They have been an outstanding student in my physics class, maintaining a high GPA and helping peers during difficult workshops. I highly recommend them for admission.
 
-**O'zbekcha Izoh:** LOR oxiriga maktub muallifining maktab rasmiy emaili va telefon raqamini ko'rsating. Bu ishonchlilikni oshiradi.`;
+Sincerely,
+Your Physics Teacher.
 
-      case "motivation_generator":
-        return `✍️ **Mukammal Inglizcha Motivatsiya xati (SOP)**
+*Tavsiyanomaning 3 xil temperament (Talabchan o'qituvchi, Ilmiy rahbar, Direktor) ohangidagi variantlarini olish uchun **PRO** ga o'ting.*`;
+        }
 
-*Dear Admission Members,*
-My profound passion for studying at ${data?.targetUniversity || "this university"} stems from my early encounters in ${data?.skillsMajor || "this domain"}. Under close collaboration, I aim to utilize my strengths...
+      case "mock_interview":
+        return `🤖 **[AI MOCK INTERVIEWER]**
+Assalomu alaykum! Men siz topshirayotgan universitetning bosh Qabul Komissiyasi rahbariman. Siz bilan muloqot qilamiz:
 
-**O'zbekcha Tavsiya:** Buni to'liqligicha nusxalab, shaxsiy qiziqishlaringizdan kelib chiqqan holda tahrirlang.`;
+**Suhbat Savoli:** 
+"Siz o'z yutuqlaringizni daxshatli professional bayon etdingiz, biroq bizning universitetga topshirgan har bir talaba a'lochi. Aynan sizni qabul qilsak, bizning talabalar hamjamiyatimizga qanday unikal ijobiy ta'sir ko'rsatasiz?"
 
-      case "financial_aid":
-        return `💰 **100% To'liq Moliyaviy Yordam (Financial Aid) Strategiyasi**
+*Javobingizni quyida o'zbek tilida yozing.*
+${premium ? "✨ *Muloqotimiz 5 ta savoldan so'ng professional tahliliy ball berish bilan o'tadi.*" : "⚠️ *Diqqat! Bepul reja doirasida suhbat faqat 2 ta savoldan so'ng yakunlanadi.*"}`;
 
-1. **CSS Profile to'g'ri to'ldirish:** Oilaviy yillik daromad $30,000 dan kam bo'lsa, Amerika universitetlarining 90% i sizga to'liq bepul o'qish va turar joy taklif qiladi.
-2. **FEE Waiver olish:** Universitet qabul portaliga to'lov bekor qilinishini so'rovchi xat topshiring.
-3. **Yashirin hujjatlar:** Oila a'zolarining ish joyidan oylik maoshlari to'g'risida to'g'ri ma'lumot yuklang.`;
+      case "ielts_speaking_partner":
+        return `🗣️ **IELTS SPEAKING PARTNER (MOCK CHAT)**
 
-      case "visa_sop":
-        return `🛂 **Viza Muvaffaqiyati va Qizil Zonalarni Bartaraf etish Rejasi**
-**Nishon Davlat:** ${data?.country || "AQSh/Yevropa"}
+*Hello, welcome to this IELTS Speaking simulated exam. My name is Senior Examiner John.*
 
-*Baholash Natijalari:*
-* **Viza rad javobi ehtimoli:** 15% (juda past, xavfsiz).
-* **Qizil zona:** Bank hisobidagi pulning yangiligi shubhali ko'rinmasligi kerak.
-* **Home Ties isboti:** O'qib bo'lib O'zbekistonga qaytib kelish ssenariyingizni inglizcha mukammal yodlang.`;
+**[Examiner]:** 
+"Let's talk about public transport in your hometown. How often do you use public transport, and do you think your government should make it completely free of charge for students?"
 
-      case "deadline":
-        return `🗓️ **Stressiz, Mukammal Avtomatik Calendar Yo'llanmasi**
+*Javobingizni yozing.*
+${premium ? "✨ *PRO: Har bir gapirgan gapingiz grammatikasi va 7.5+ darajaga almashtirilgan (Rephrase) ko'rinishida taqdim etiladi!*" : "🔒 *Siz bepul rejimdasiz (faqat umumiy 1 ta xato ko'rsatiladi).*"}`;
 
-* **Dushanba - Chorshanba:** Kuniga 3 soat faqat qiyin bo'limlarni o'rganish (IELTS Writing/Speaking).
-* **Payshanba - Juma:** Insho va Motivatsiya xatlarini tahrirlash (Katalog AI yordamida).
-* **Shanba:** To'liq Mock Test yechish va xatolarni tahlil qilish.
-* **Yakshanba:** To'liq dam olish va miya faoliyatini tiklash.`;
+      case "activity_translator":
+        if (premium) {
+          return `🏅 **TopGrand ACTIVITY TRANSLATOR (Common App Standard)**
 
-      case "gap_year":
-        return `✊ **Gap-Year imkoniyatlaridan foydalanish loyihasi**
+Kiritilgan 3 ta faoliyatingiz elita Common App tiliga o'tkazildi (150 tagacha belgi):
 
-1. **Lokal Startap tashkil qilish:** 3-4 kishi bilan bepul sayt yoki dastur yasab, foydalanuvchilar jalb qiling. Bu CommonApp uchun elita portfolio bo'ladi.
-2. **Kompaniya Amaliyoti (Internship):** Nufuzli mahalliy IT yoki moliya kompaniyalarida bepul bo'lsa ham ishlab, sertifikat oling.
-3. **Yozgi Maktablar:** AQSh elchixonasi taklif etadigan bepul darslarda faol qatnashing.`;
+1. **STEM Mentoring & Leadership**
+*"Co-organized localized high-school peer tutoring club; mentored 25+ peers in algebra, elevating average testing performance metrics by 18%."*
 
-      case "score_predictor":
-        return `📈 **SAT & IELTS Ballarini Prognozlash Hisoboti**
-**Hozirgi Mock ko'rsatkichi:** ${data?.currentScore || "IELTS 6.0"}
-**Mo'ljallangan marra:** ${data?.targetScore || "IELTS 7.5"}
+2. **Environmental Initiative Founder**
+*"Launched localized tree-planting startup; mobilized 12 volunteers to plant 150+ trees, promoting ecological environmental literacy."*
 
-*Bizning Algoritm Hisob-kitobi bo'yicha:*
-* **Real imtihondagi ehtimoliy ballingiz:** IELTS 7.0 (SAT bo'lsa 1380).
-* **Sizga yetmayotgan qismlar:** Reading bo'limida so'zlarni tez ko'zdan kechirish (scanning).
-* **Reja:** Kundalik akademik maqolalar o'qing, imtihonda vaqtni tejash usulini mustahkamlang.`;
+3. **Software & Web Architecture**
+*"Designed and deployed open-source software structures for local community NGOs; optimized UI accessibility for 120+ active daily users."*`;
+        } else {
+          return `🏅 **TopGrand ACTIVITY TRANSLATOR (Bepul Tahlil - 2 ta faoliyat)**
 
-      case "culture":
-        return `🏫 **Universitet Madaniyati va Adaptatsiya Qoidalari**
+1. **STEM Mentoring:** *"Coordinated high-school tutoring program; assisted 15+ students with chemistry workshops."*
+2. **Community Action:** *"Volunteered in local environmental club; helped plant trees and clean regional parks."*
 
-* **Siz uchun ideal universitet muhiti:** Talabalari muloqotga ochiq, klublari ko'p va IT sohasida yetakchi bo'lgan zamonaviy kampuslar.
-* **Moslashish sirlari:** Birinchi haftada barcha ijtimoiy tashkilotlar (Clubs) faoliyalariga a'zo bo'ling, faol liderlar bilan tanishing.`;
+*Barcha 10 tagacha faoliyatlaringizni Common App me'yorlariga moslashtirish uchun **PRO** obunani faollashtiring.*`;
+        }
 
-      case "translator":
-        return `🌐 **Hujjatlar Tarjimasi Terminologiya Tahlili**
+      case "rejection_appeal":
+        if (premium) {
+          return `⚖️ **TopGrand REJECTION APPEAL WRITER (PRO exclusive access)**
 
-* **Tahlil:** "Tarix" fani "History" deb muvaffaqiyatli tarjima qilingan. "Akademik litsey" atamasini "High School / College" deb berish xalqaro qabulda tushunarliroq bo'ladi.
-* **Maslahat:** Diplom ilovalarini topshirishda fanning inglizcha rasmiy nomlaridan foydalaning.`;
+**Ingliz tilidagi daxshatli va mantiqiy re-consideration maktub:**
 
-      case "networking":
-        return `🤝 **LinkedIn Netvorking Muloqoti Shablonlari**
+*Dear Admissions Appeals Committee,*
 
-**Ulanish uchun qisqa xat:**
-*Hi [Alumni Name], I am a prospective student applying to ${data?.targetUniversity || "your university"}. I am highly inspired by your career path in ${data?.major || "Finance"} and would love to ask you a few quick questions...*
+I am writing to formally request a reconsideration of my recent admission decision for the upcoming Fall semester. While I understand and respect the high selectivity of your institution, I am confident that key newly developed metrics in my portfolio highlight a profound alignment with your university's values.
 
-**Sirlar:** LinkedIn-da faqat profil rasmi o'ta professional va chiroyli bo'lganlar bilan bog'laning.`;
+Specifically, at the time of initial application review, my latest STEM accomplishments and localized organizational achievements were not yet fully processed. These projects demonstrate my persistent scholarly commitment. I would deeply appreciate the opportunity to have my application dossier re-evaluated with these vital updates included...
+
+Sincerely,
+${userName}`;
+        } else {
+          return `🔒 **TopGrand REJECTION APPEAL WRITER**
+          
+**Ushbu xizmat faqat PRO foydalanuvchilar uchun ochiq!**
+Universitet rad javobidan so'ng qabul komissiyasini qarorni qayta ko'rib chiqishga undovchi chuqur motivatsion andozani olish uchun Premium rejaga o'ting.`;
+        }
 
       default:
-        return `📊 **[TopGrand AI Professional Tahlil]**
-Assalomu alaykum, hurmatli **${userName}**! Siz kiritgan barcha ma'lumotlar tahlilidan quyidagi natijalar olindi:
-
-1. **Joriy holat:** Kiritgan barcha parametrlar ${Object.values(data).join(", ")} asosida qayta baholandi.
-2. **Asosiy tavsiya:** Hujjatlarni rasmiylashtirishda TopGrand AI Suite darsliklaridan muntazam foydalanib boring.
-3. **Harakat rejasi:** Insho va motivatsiya xatlarini bexato holatga keltirib o'tkazing va to'g'ridan-to'g'ri topshiring.`;
+        return `📊 **[TopGrand AI Professional Tahlil]**`;
     }
   };
 
@@ -432,7 +420,7 @@ Assalomu alaykum, hurmatli **${userName}**! Siz kiritgan barcha ma'lumotlar tahl
 
   } catch (error: any) {
     console.error("Gemini API Error, falling back to high-fidelity Uzbek simulation:", error);
-    const text = generateSimulatedResponse(toolType, inputData);
+    const text = generateSimulatedResponse(toolType, userPremium);
     res.json({ text, sources: [] });
   }
 });

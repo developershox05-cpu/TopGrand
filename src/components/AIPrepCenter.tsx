@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Sparkles, FileText, MessageSquare, Terminal, RefreshCw, Key, Shield, Clock, Lock, 
-  Check, ArrowRight, CornerDownRight, DollarSign, Award, BookOpen, AlertCircle, Heart,
-  FileCheck, ShieldCheck, Mail, Compass, Layers, Milestone, Send, Gem
+  Sparkles, FileText, MessageSquare, Clock, Lock, Check, ArrowRight, DollarSign, 
+  Award, BookOpen, AlertCircle, Mail, Compass, Layers, Send, Gem, Trash2, ArrowLeft,
+  FileCheck, CheckCircle, RefreshCw
 } from 'lucide-react';
 import { User } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 interface AIPrepCenterProps {
   user: User;
@@ -16,6 +18,7 @@ interface AIPrepCenterProps {
 
 interface ToolConfig {
   key: string;
+  category: 'architect' | 'executioner' | 'simulator' | 'strategist';
   title: string;
   description: string;
   icon: React.ComponentType<any>;
@@ -36,157 +39,238 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
   const [selectedTool, setSelectedTool] = useState<ToolConfig | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
-  const [usageTrigger, setUsageTrigger] = useState(0); // Trigger re-rendering of usage limits
+  const [usageTrigger, setUsageTrigger] = useState(0); 
 
-  // Unified Form Values State for all tools
+  // Countdown timer relative to local midnight
+  const [countdownText, setCountdownText] = useState('23:59:59');
+
+  // Active Category filter state ('all' or 'architect' etc...)
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+
+  // Unified Form Values for all non-chat form inputs
   const [formValues, setFormValues] = useState<Record<string, string>>({
-    essayText: '',
-    topic: '',
-    recommenderRole: 'Matematika o\'qituvchisi',
-    strengths: 'Matematika olimpiadasi g\'olibi, intizomli, liderlik qobiliyati kuchli',
-    skillsMajor: 'Fizika olimpiadasi g\'olibi, intizomli',
-    targetUniversity: 'Stanford University',
-    tone: 'Professional va samimiy',
-    age: '18',
-    gpa: '4.8',
-    languageScore: 'IELTS 7.0 / SAT Yo\'q',
-    major: 'Biznes va IT',
-    topic_vocab: 'Sog\'liqni saqlash',
-    currentLevel: 'Intermediate',
-    country: 'Germaniya',
-    lifestyle: 'Tejamkor (Yotoqxona)',
-    sopText: '',
-    favorites: 'Matematika, Fizika, Dasturlash',
-    hobbies: 'Startaplar, Robototexnika, Shaxmat',
-    grade: '10-sinf',
-    history: 'Faqat standart darslar',
-    currentScore: 'IELTS 6.0 / SAT 1200',
-    targetScore: 'IELTS 7.5 / SAT 1450',
-    timeLeft: '3 oy',
-    examType: 'IELTS Academic',
-    dailyHours: '4 soat',
-    weakAreas: 'Writing Task 1 & Task 2'
+    gpa: '4.8 / 5.0',
+    ielts_score: 'IELTS 7.0 (SAT Yo\'q)',
+    accomplishments: 'Matematika burchagi tashkilotchisi, maktab futbol sardori, kitobxonlar klubi faoli',
+    annual_income: '$4,000',
+    max_affordable: '$500',
+    rough_experience: 'Maktabda sardor bo\'lganman, hammasiga yordam beraman, ingliz tilini bilaman, robototexnika klubiga qatnashganman',
+    essay_text: 'I have always dreamed of solving world-class software challenges in a prestigious global environment...',
+    target_major: 'Computer Science & Software Engineering',
+    professor_name: 'Dr. John Harrison',
+    professor_interests: 'Distributed database systems and cloud query speed optimizations',
+    student_interest: 'Graph databases and database caching layers in edge instances',
+    simple_lor: 'Ushbu talaba juda yaxshi va bilimga qiziqadi. Uni tavsiya qilaman.',
+    simple_hobbies: 'Rasm chizaman, maktab bog\'iga daraxtlar ekaman, futbol o\'ynayman',
+    rejection_letter: 'We regret to inform you that we are unable to offer you admission to our university for the Fall semester...'
   });
 
-  // Chat message & history states
+  // Chat message states
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ sender: 'user' | 'ai'; text: string }>>([]);
 
-  // Interview Multi-step states
-  const [interviewMajor, setInterviewMajor] = useState('Computer Science & AI');
-  const [interviewHistory, setInterviewHistory] = useState<Array<{ question: string; answer?: string }>>([
-    { question: "Assalomu alaykum! TopGrand xalqaro suhbat xonasiga xush kelibsiz. O'zingizni tanishtiring va nega aynan ushbu oliygoh hamda mutaxassislikni tanlaganingizni aytib bering." }
-  ]);
-  const [currentInterviewAnswer, setCurrentInterviewAnswer] = useState('');
+  // Live countdown timer effect
+  useEffect(() => {
+    const updateTimeLeft = () => {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      const diffMs = midnight.getTime() - now.getTime();
 
-  // 20 Premium Ivy-League Ready Academic AI Tools Configuration
+      const hours = Math.floor(diffMs / (3600 * 1000));
+      const mins = Math.floor((diffMs % (3600 * 1000)) / (60 * 1000));
+      const secs = Math.floor((diffMs % (60 * 1000)) / 1000);
+
+      const formatted = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      setCountdownText(formatted);
+    };
+
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 10 core AI Functions specified by user
   const tools: ToolConfig[] = [
-    { key: 'essay', title: "Admission Officer (Simulyator)", description: "Insho va portfolioni Harvard, Stanford yoki Oxford qabul komissiyasi ko'zi bilan tanqidiy tahlil qilish va Ivy League moslik foizini hisoblash.", icon: FileCheck, color: 'from-blue-600 to-cyan-500', popular: true },
-    { key: 'interview', title: "AI Mock Interview (Interaktiv)", description: "Interaktiv real-vaqt intervyu simulyatori. Ortiqcha filler so'zlar (umm, aaa) tahlili va real qabul komissiyasi a'zosi suhbati.", icon: Terminal, color: 'from-cyan-500 to-blue-600', popular: true },
-    { key: 'autopilot', title: "AI Application Autopilot", description: "Hujjatlar asosida universitet arizalarini to'ldirish bosqichlari va qabul portaliga to'liq integratsiya strategiyasi.", icon: RefreshCw, color: 'from-blue-500 to-indigo-500', popular: true },
-    { key: 'dark_crawler', title: "Dark-Data Scholarship Crawler", description: "Google yoki ijtimoiy tarmoqlarda ochiq bo'lmagan, yashirin xususiy fondlar va oliygoh ichki grantlarini profilingizga qarab topuvchi detektor.", icon: Compass, color: 'from-purple-500 to-blue-600', popular: true },
-    { key: 'kvant_matrix', title: "AI Predictive Admission Matrix", description: "Inshongizdagi jumlalarni kognitiv optimizatsiya qilib (masalan 'innovatsiya' so'zini 'ijtimoiy ta'sir'ga almashtirib) kirish ehtimolini hisoblash.", icon: Layers, color: 'from-indigo-600 to-purple-500' },
-    { key: 'prof_matcher', title: "Professor Personality Matcher", description: "Ilmiy maqola mualliflari, global professorlarning LinkedIn va ilmiy ishlarini tahlil qilib, ular bilan mustahkam aloqa o'rnatish sirlari.", icon: Key, color: 'from-cyan-400 to-indigo-500' },
-    { key: 'roadmap_gen', title: "Dynamic Up-Skilling Roadmap", description: "Nufuzli oliygohlarga mos 2 yillik kuchli loyihalar, olimpiadalar va darsdan tashqari hayotiy faoliyat rejasi.", icon: Milestone, color: 'from-blue-500 to-cyan-400' },
-    { key: 'cold_email', title: "Cold-Email Autopilot", description: "Xorijiy professorlarga laboratoriya yoki grant asosida o'qishga kirish uchun daxshatli professional, shaxsiy aloqa xatlari.", icon: Mail, color: 'from-indigo-500 to-cyan-400' },
-    { key: 'lor_generator', title: "Recommendation Letter Reconstructor", description: "Maktab o'qituvchisi bergandek sodda tavsiyanomani oliy qabul komissiyalari talab qiladigan eng yuqori darajada rekonstruksiya qilish.", icon: ShieldCheck, color: 'from-cyan-500 to-indigo-600' },
-    { key: 'motivation_generator', title: "Motivation Letter Masterclass", description: "Yutuqlaringiz, qiziqishlaringiz va maqsadlaringiz asosida qabul komissiyasini lol qildiradigan professional motivatsiya xati inshosi.", icon: Sparkles, color: 'from-indigo-500 to-cyan-400' },
-    { key: 'financial_aid', title: "Financial Aid Strategy Builder", description: "Oilaviy budjet va daromadga asosan nufuzli oliygohdan 100% gacha bo'lgan to'liq moliya yordamini so'rash va rasmilashtirish rejasi.", icon: DollarSign, color: 'from-green-500 to-cyan-500' },
-    { key: 'visa_sop', title: "Visa Success Predictor & Planner", description: "Hujjatlaringiz (SOP, bank balansi, oilaviy holat) asosida viza rad etilishi xavfini aniqlash va qizil zonalarni bartaraf qilish.", icon: Shield, color: 'from-purple-500 to-blue-600' },
-    { key: 'scholarship_matcher', title: "Scholarship Match-Maker", description: "Global xususiy jamg'armalar, Coca-Cola, Gates, MasterCard va hukumat stipendiyalarini profilingizga qarab filtrlash.", icon: Award, color: 'from-blue-600 to-indigo-500' },
-    { key: 'deadline', title: "Deadline Guardian (Avtomatik Reja)", description: "Universitet topshirish muddati va tayyorgarligingizga qarab stressiz, soatbay avtomatik reja (calendar plan).", icon: Clock, color: 'from-cyan-500 to-blue-600' },
-    { key: 'gap_year', title: "Gap-Year Strategy Generator", description: "Agar bu yil kirolmagan bo'lsangiz, vaqtni yo'qotmay keyingi yilga 200% kafolat beruvchi amaliy portfolioni shakllantirish loyihalari.", icon: Compass, color: 'from-blue-400 to-cyan-500' },
-    { key: 'score_predictor', title: "SAT/IELTS Score Predictor", description: "Yozilgan insho va yechilgan mock xatolaringiz asosida real imtihondagi yakuniy daxshatli ballni prognoz va tahlil qilish.", icon: Key, color: 'from-indigo-600 to-cyan-400' },
-    { key: 'culture', title: "University Culture Matcher", description: "Shaxsiy xarakteringiz, shovqinli shahar yoki sokin yotoqxona, iqlimiy imtiyozlaringizga mos eng mukammal universitet muhitini topish.", icon: BookOpen, color: 'from-blue-500 to-purple-500' },
-    { key: 'translator', title: "AI Document Translator Analyst", description: "Notarial tarjima qilingan hujjatlarda xalqaro standart darslik terminologiyasiga to'liq rioya etilganini tekshirish.", icon: FileCheck, color: 'from-cyan-400 to-indigo-500' },
-    { key: 'networking', title: "LinkedIn Network Connector", description: "Target universitet bitiruvchilaridan reabilitatsiya xatlari yoki 'Referral' olish maqsadida qanday yozish bo'yicha shablonlar.", icon: MessageSquare, color: 'from-blue-400 to-cyan-500' },
-    { key: 'chat', title: "AI Smart Academic Advisor", description: "Konsalting firmalarsiz, bevosita topshirish, grant va stipendiya yutish bo'yicha to'g'ridan-to'g'ri universal maslahatchi.", icon: MessageSquare, color: 'from-blue-500 to-cyan-400', popular: true }
+    // 1-BO‘LIM: "The Architect" (Strategiya paneli)
+    { 
+      key: 'profile_weakness_auditor', 
+      category: 'architect', 
+      title: "Profile Weakness Auditor", 
+      description: "GPA, IELTS ballari hamda akademik yutuqlaringizni tahlil qilib, eng zaif qizil nuqtalarni va rad etilish xavflarini audit qiladi.", 
+      icon: AlertCircle, 
+      color: 'from-blue-500 to-sky-400', 
+      popular: true 
+    },
+    { 
+      key: 'reverse_scholarship', 
+      category: 'architect', 
+      title: "Reverse Scholarship Calculator", 
+      description: "Oilaviy yillik daromadingiz va maksimal to‘lov imkoniyatingiz asosida 50+ ommaviy xalqaro grantlardan sizga eng moslarini filtrlaydi.", 
+      icon: DollarSign, 
+      color: 'from-sky-500 to-indigo-400' 
+    },
+
+    // 2-BO‘LIM: "The Executioner" (Hujjatlar ustaxonasi)
+    { 
+      key: 'cv_builder', 
+      category: 'executioner', 
+      title: "AI Smart Resume (CV) Builder", 
+      description: "Tartibsiz faoliyatlar va yozuvlaringizni nufuzli Harvard standartidagi elita akademik rezyumega (CV) aylantiradi.", 
+      icon: FileCheck, 
+      color: 'from-blue-600 to-purple-500', 
+      popular: true 
+    },
+    { 
+      key: 'sop_critic', 
+      category: 'executioner', 
+      title: "Statement of Purpose (SoP) Critic", 
+      description: "Insho (SOP / Motivation letter) matnidagi mantiqsiz, zerikarli va klishe iboralarni qizil rangda belgilab, o'rniga jozibador versiyalarni yozadi.", 
+      icon: BookOpen, 
+      color: 'from-purple-500 to-pink-500' 
+    },
+    { 
+      key: 'cold_email_generator', 
+      category: 'executioner', 
+      title: "Cold-Email Generator", 
+      description: "Xorijiy professorlarga laboratoriya yoki ilmiy grant yordamchisi bo'lish uchun 99% javob kafolatlaydigan shaxsiy va aqlli xatlar.", 
+      icon: Mail, 
+      color: 'from-cyan-500 to-blue-500' 
+    },
+    { 
+      key: 'lor_enhancer', 
+      category: 'executioner', 
+      title: "Recommendation Letter (LoR) Enhancer", 
+      description: "O‘qituvchining oddiy tavsiyanomasini g‘arbiy universitetlar muloqot standartlariga va yuqori ilmiy maqullash darajasiga olib chiqadi.", 
+      icon: Award, 
+      color: 'from-indigo-500 to-sky-500' 
+    },
+
+    // 3-BO‘LIM: "The Simulator" (Jonli mashg‘ulot)
+    { 
+      key: 'mock_interview', 
+      category: 'simulator', 
+      title: "AI Text-Based Mock Interview", 
+      description: "Haqiqiy xalqaro universitet Admissions Officer bilan jonli savol-javob suhbat simulyatsiyasi (Interactive Chat).", 
+      icon: MessageSquare, 
+      color: 'from-blue-600 to-cyan-500', 
+      popular: true 
+    },
+    { 
+      key: 'ielts_speaking_partner', 
+      category: 'simulator', 
+      title: "IELTS Speaking Partner", 
+      description: "IELTS Speaking imtihoni (Part 1, 2 hamda 3) bo'yicha Cue Card savollari va til ravonligi tahlilchi hamkori.", 
+      icon: Sparkles, 
+      color: 'from-cyan-500 to-indigo-500', 
+      popular: true 
+    },
+
+    // 4-BO‘LIM: "The Strategist" (Taktik yordam)
+    { 
+      key: 'activity_translator', 
+      category: 'strategist', 
+      title: "Extracurricular Activity Translator", 
+      description: "Sizning mahalliy kichik sevimli mashg‘ulot yoki ishlaringizni Common App talabiga mos elita liderlik ta'riflariga o‘giradi.", 
+      icon: Compass, 
+      color: 'from-teal-500 to-blue-500' 
+    },
+    { 
+      key: 'rejection_appeal', 
+      category: 'strategist', 
+      title: "Rejection Appeal Writer", 
+      description: "Universitet rad jamoasini (rejection letter) chuqur tahlil qilib, qabul qarorini qayta ko'rib chiqishga undovchi asoslangan apellyatsiya xati.", 
+      icon: Layers, 
+      color: 'from-rose-500 to-orange-500' 
+    }
   ];
 
-  // Dynamic Form Field configuration for non-chat & non-mock-interview tools
+  const categories = [
+    { key: 'all', label: "Barcha Modullar ⚡" },
+    { key: 'architect', label: "The Architect 🧠" },
+    { key: 'executioner', label: "The Ghost Writer ✍️" },
+    { key: 'simulator', label: "The Simulator 🗣️" },
+    { key: 'strategist', label: "The Strategist 🤝" }
+  ];
+
   const toolFields: Record<string, FormField[]> = {
-    essay: [
-      { id: 'topic', label: "Insho Mavzusi (Majburiy emas)", type: 'text', placeholder: "Masalan: Should AI replace teachers?" },
-      { id: 'essayText', label: "Insho matnini kiriting (Tahlil qilish uchun)", type: 'textarea', placeholder: "Inshongizni yoki Personal Statement matnini shu yerga yozing..." }
+    profile_weakness_auditor: [
+      { id: 'gpa', label: "Mavjud GPA yoki O'rtacha Bahongiz (5.0 yoki 100 lik shkalada)", type: 'text', placeholder: "Masalan: 4.8 / 5.0 or 92%" },
+      { id: 'ielts_score', label: "IELTS, TOEFL yoki Duolingo sertifikati bali", type: 'text', placeholder: "Masalan: IELTS 7.0, SAT 1410 (SAT bo'lmasa 'yo'q' deb yozing)" },
+      { id: 'accomplishments', label: "Siz qilgan darsdan tashqari barcha ishlar va natijalaringiz (Erkin matn)", type: 'textarea', placeholder: "Masalan: futbol sardori, kitob yozganman, matematika to'garagi..." }
     ],
-    autopilot: [
-      { id: 'targetUniversity', label: "Maqsadli Universitet", type: 'text', placeholder: "Masalan: Stanford University, Oxford University" },
-      { id: 'sopText', label: "Yuklangan insho yoki hujjat matni", type: 'textarea', placeholder: "Hujjat matnini shu yerga kiriting..." }
+    reverse_scholarship: [
+      { id: 'annual_income', label: "Oilaviy Yillik Jami Daromadingiz ($ USD ekvivalentida)", type: 'text', placeholder: "Masalan: $5,000" },
+      { id: 'max_affordable', label: "Siz yoki oilangiz to'lay oladigan o'quv kontraktining YILLIK maksimal summasi ($)", type: 'text', placeholder: "Masalan: $0 (To'liq bepul grantlar kerak), $1,000 va h.k." }
     ],
-    dark_crawler: [
-      { id: 'country', label: "Qiziqayotgan Davlatingiz", type: 'text', placeholder: "Masalan: AQSh, Germaniya, Italiya, Polsha" },
-      { id: 'major', label: "Mutaxassislik yo'nalishingiz", type: 'text', placeholder: "Masalan: Kompyuter muhandisligi, Moliyaviy tahlil" }
+    cv_builder: [
+      { id: 'rough_experience', label: "Barcha maktab yoki universitetdagi tartibsiz faoliyatlaringizni kiriting", type: 'textarea', placeholder: "Maktabda sardor bolganman, o'quvchilarga yordam berganman, futbol oynayman..." }
     ],
-    kvant_matrix: [
-      { id: 'targetUniversity', label: "Nishondagi Universitet", type: 'text', placeholder: "Masalan: Harvard University" },
-      { id: 'essayText', label: "Inshongizdan biron bir muhim abzats yoki butun matnni kiriting", type: 'textarea', placeholder: "Masalan: I wanted to build software because it was cool..." }
+    sop_critic: [
+      { id: 'target_major', label: "Hujjat topshirayotgan mutaxassisligingiz (Major)", type: 'text', placeholder: "Masalan: Computer Science, Business Analytics" },
+      { id: 'essay_text', label: "Sizning Statement of Purpose / Motivation Letter matningiz yoki parchasi", type: 'textarea', placeholder: "Motivation letter / inshoni shu yerga yuklang..." }
     ],
-    prof_matcher: [
-      { id: 'strengths', label: "Siz qiziqayotgan tadqiqot sohasini kiriting", type: 'textarea', placeholder: "Masalan: Machine Learning, Quantum Computing, Cancer Research" }
+    cold_email_generator: [
+      { id: 'target_major', label: "Siz o'qib tatbiq qilmoqchi bo'lgan maqsadli soha", type: 'text', placeholder: "Masalan: Machine Learning & Health Informatics" },
+      { id: 'professor_name', label: "Professorning to'liq ismi / unvoni", type: 'text', placeholder: "Masalan: Prof. Dr. Andrew Ng" },
+      { id: 'professor_interests', label: "Professorning asosiy tadqiqot focuses yoki ilmiy ishlari", type: 'text', placeholder: "Masalan: Reinforcement learning in robotics safety control" },
+      { id: 'student_interest', label: "Sizning aynan shu professor bilan qilishni xohlagan fikringiz yoki mavzuingiz (PRO)", type: 'textarea', placeholder: "Professorning so'nggi ilmiy ishiga bog'lab ssenariy..." }
     ],
-    roadmap_gen: [
-      { id: 'targetUniversity', label: "Siz kirmoqchi bo'lgan orzudagi oliygoh (Target)", type: 'text', placeholder: "Masalan: MIT (Massachusetts Institute of Technology)" },
-      { id: 'grade', label: "Hozirgi sinfingiz / kursingiz", type: 'text', placeholder: "Masalan: 10-sinf yoki Lysey 1-kurs" },
-      { id: 'history', label: "Kamtarona qilgan hozirgi ishlaringiz yoki qiziqishlaringiz", type: 'textarea', placeholder: "Masalan: Matematika to'garagi, maktab veb-saytini tuzganman..." }
+    lor_enhancer: [
+      { id: 'simple_lor', label: "O'qituvchining yozgan sodda yoki past sifatli Recommendation Letter matni", type: 'textarea', placeholder: "Pasted low quality recommendations..." }
     ],
-    cold_email: [
-      { id: 'recommenderRole', label: "Professor Ismi va Kafedrasi", type: 'text', placeholder: "Masalan: Prof. Smith, Stanford Computer Science" },
-      { id: 'strengths', label: "Professor yozgan tadqiqot yoki maqola mavzusi", type: 'textarea', placeholder: "Masalan: AI fairness in convolutional neural networks" }
+    activity_translator: [
+      { id: 'simple_hobbies', label: "Kichik, oddiy sevimli mashg'ulotlaringiz (Ijtimoiy ishlaringiz)", type: 'textarea', placeholder: "Masalan: futbol o'ynayman, maktab bog'ida daraxtlar ekaman, telegram bot qilaman..." }
     ],
-    lor_generator: [
-      { id: 'recommenderRole', label: "Tavsiyanoma berayotgan shaxs unvoni (Lavozimi)", type: 'text', placeholder: "Masalan: Matematika o'qituvchisi" },
-      { id: 'strengths', label: "Sizning asosiy akademik kuchli tomonlaringiz, yutuqlaringiz", type: 'textarea', placeholder: "Masalan: Kuchli mantiqiy fikrlash, Fizika olimpiadasi 1-o'rin, jamoaviy lider" }
-    ],
-    motivation_generator: [
-      { id: 'targetUniversity', label: "Maqsadli Universitet", type: 'text', placeholder: "Masalan: Oxford University" },
-      { id: 'skillsMajor', label: "Qiziqadigan sohangiz va ko'nikmalaringiz", type: 'textarea', placeholder: "Masalan: Kiberxavfsizlik va dasturlash loyihalari..." }
-    ],
-    financial_aid: [
-      { id: 'topic', label: "Oilavyi yillik jami daromad (USD/UZS'da ko'rsating)", type: 'text', placeholder: "Masalan: $5,000 / 60 mln so'm" },
-      { id: 'country', label: "Maqsadli Davlat", type: 'text', placeholder: "Masalan: AQSh, Koreya, Turkiya" }
-    ],
-    visa_sop: [
-      { id: 'country', label: "Viza olmoqchi bo'lgan davlat", type: 'text', placeholder: "Masalan: AQSh F-1 Vizasi, Koreya D-2 Vizasi" },
-      { id: 'sopText', label: "Mablag' miqdori va oilaviy rishtalar haqida qisqacha rejangiz", type: 'textarea', placeholder: "Masalan: Otam homiy ($30,000 bor), o'qib bo'lib O'zbekistonga qaytaman..." }
-    ],
-    scholarship_matcher: [
-      { id: 'age', label: "Yoshingiz", type: 'number', placeholder: "18" },
-      { id: 'gpa', label: "GPA balingiz (5 lik yoki 4 lik shkalada)", type: 'text', placeholder: "4.8 yoki 3.9" },
-      { id: 'languageScore', label: "IELTS / SAT native ballari", type: 'text', placeholder: "IELTS 7.5, SAT 1420" },
-      { id: 'major', label: "Sohangiz (Major)", type: 'text', placeholder: "Masalan: Iqtisodiyot" }
-    ],
-    deadline: [
-      { id: 'targetUniversity', label: "Maqsadli Universitetlar va imtihonlar", type: 'text', placeholder: "Masalan: Stanford University (Early Action)" },
-      { id: 'timeLeft', label: "Tayyorgarlikka mo'ljallangan umumiy vaqt", type: 'text', placeholder: "Masalan: 3 oy yoki 6 oy" }
-    ],
-    gap_year: [
-      { id: 'major', label: "Siz o'qimoqchi bo'lgan soha", type: 'text', placeholder: "Masalan: Data Science & Business" },
-      { id: 'history', label: "Oldingi yutuq va kamchilinlariz (Nima uchun bu yil kira olmadingiz?)", type: 'textarea', placeholder: "IELTS 6.5 ball yetmadi, insho oxiriga yetmay qoldi..." }
-    ],
-    score_predictor: [
-      { id: 'currentScore', label: "Hozirgi Mock / amaldagi ballaringiz", type: 'text', placeholder: "IELTS 6.0, SAT 1200" },
-      { id: 'targetScore', label: "Maqsad qilgan balingiz", type: 'text', placeholder: "IELTS 7.5, SAT 1450" },
-      { id: 'timeLeft', label: "Imtihongacha qolgan aniq vaqt", type: 'text', placeholder: "2 oy" }
-    ],
-    culture: [
-      { id: 'topic', label: "Siz qanday muhitni yoqtirasiz?", type: 'text', placeholder: "Masalan: Megapolis shahar, issiq iqlim, nufuzli kampuslar" },
-      { id: 'hobbies', label: "Sizning qiziqishlaringiz va bo'sh vaqtdagi mashg'ulotlariz", type: 'textarea', placeholder: "Masalan: Futbol, teatr, kitob jamoalari" }
-    ],
-    translator: [
-      { id: 'sopText', label: "Tekshirilishi kerak bo'lgan hujjat bo'limi yoki terminlar", type: 'textarea', placeholder: "Masalan: 'Iqtisodiy tahlil va prognozlash kafedrasi mudiri tavsiyanomasi' ..." }
-    ],
-    networking: [
-      { id: 'targetUniversity', label: "Alumni o'qiyotgan target oliygoh", type: 'text', placeholder: "Masalan: NYU (New York University)" },
-      { id: 'major', label: "Ushbu liniyadagi soha", type: 'text', placeholder: "Masalan: Finance / Investment Banking" }
+    rejection_appeal: [
+      { id: 'rejection_letter', label: "Universitetdan kelgan rad etish xatini (Rejection Letter) to'liq kiriting", type: 'textarea', placeholder: "We regret to inform you..." }
     ]
   };
 
-  // Robust VIP Gating: check usage state
-  const checkUsageLimit = (toolKey: string) => {
+  // Limit Check algorithm synchronized with Firestore
+  const [limits, setLimits] = useState<Record<string, { count: number; limit: number; remaining: number; isLocked: boolean }>>({});
+
+  const isInteractiveChat = (toolKey: string) => {
+    return ['mock_interview', 'ielts_speaking_partner'].includes(toolKey);
+  };
+
+  const getToolLimit = (toolKey: string) => {
+    // IELTS and mock interview are chats, limiting to 5 requests per 24 hours. Form generators are 1 request per 24h.
+    return isInteractiveChat(toolKey) ? 5 : 1;
+  };
+
+  // Check state usage
+  const checkCurrentLimit = async (toolKey: string) => {
     if (user.isPremium) {
       return { isLocked: false, remaining: Infinity, limit: Infinity, count: 0 };
     }
 
+    const limitValue = getToolLimit(toolKey);
+
+    if (user.isLoggedIn && user.id) {
+      try {
+        const docRef = doc(db, "users", user.id, "usage", toolKey);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const timestampsList: string[] = data.timestamps || [];
+          const now = Date.now();
+          const oneDayMs = 24 * 60 * 60 * 1000;
+          const recent = timestampsList.filter(ts => (now - new Date(ts).getTime()) < oneDayMs);
+
+          const count = recent.length;
+          const remaining = Math.max(0, limitValue - count);
+          const isLocked = count >= limitValue;
+
+          return { isLocked, remaining, limit: limitValue, count };
+        }
+      } catch (err) {
+        console.error("Firestore limit fetch error, falling back to localStorage", err);
+      }
+    }
+
+    // Local fallback check
     const storageKey = `topgrand_usage_${user.id || 'guest'}_${toolKey}`;
     const raw = localStorage.getItem(storageKey);
     let timestamps: string[] = [];
@@ -198,24 +282,32 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
       }
     }
 
-    // Filter to last 24h
-    const now = new Date().getTime();
+    const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
-    const recent = timestamps.filter(ts => {
-      const t = new Date(ts).getTime();
-      return now - t < oneDayMs;
-    });
+    const recent = timestamps.filter(ts => (now - new Date(ts).getTime()) < oneDayMs);
 
-    const isChat = toolKey === 'chat' || toolKey === 'interview';
-    const limit = isChat ? 5 : 1;
     const count = recent.length;
-    const isLocked = count >= limit;
-    const remaining = Math.max(0, limit - count);
+    const remaining = Math.max(0, limitValue - count);
+    const isLocked = count >= limitValue;
 
-    return { isLocked, remaining, limit, count };
+    return { isLocked, remaining, limit: limitValue, count };
   };
 
-  const recordUsage = (toolKey: string) => {
+  // Load all tool limits on mount/trigger
+  const refreshAllLimits = async () => {
+    const limitsTemp: Record<string, { count: number; limit: number; remaining: number; isLocked: boolean }> = {};
+    for (const tool of tools) {
+      limitsTemp[tool.key] = await checkCurrentLimit(tool.key);
+    }
+    setLimits(limitsTemp);
+  };
+
+  useEffect(() => {
+    refreshAllLimits();
+  }, [user.id, user.isPremium, usageTrigger]);
+
+  const recordUsageLocallyAndRemote = async (toolKey: string) => {
+    // 1. Update localStorage
     const storageKey = `topgrand_usage_${user.id || 'guest'}_${toolKey}`;
     const raw = localStorage.getItem(storageKey);
     let timestamps: string[] = [];
@@ -226,10 +318,35 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
         timestamps = [];
       }
     }
-
     timestamps.push(new Date().toISOString());
     localStorage.setItem(storageKey, JSON.stringify(timestamps));
+
+    // 2. Update Firestore if logged in
+    if (user.isLoggedIn && user.id) {
+      try {
+        const docRef = doc(db, "users", user.id, "usage", toolKey);
+        await setDoc(docRef, {
+          userId: user.id,
+          toolKey: toolKey,
+          timestamps: timestamps
+        });
+      } catch (err) {
+        console.error("Firestore error recording usage", err);
+      }
+    }
+
     setUsageTrigger(prev => prev + 1);
+    onUpdateUsage(toolKey);
+  };
+
+  const clearUsageStats = () => {
+    if (window.confirm("Barcha bepul limitlarni qayta tiklashni xohlaysizmi (Test uchun)?")) {
+      tools.forEach(tool => {
+        const key = `topgrand_usage_${user.id || 'guest'}_${tool.key}`;
+        localStorage.removeItem(key);
+      });
+      setUsageTrigger(prev => prev + 1);
+    }
   };
 
   const handleSelectTool = (tool: ToolConfig) => {
@@ -240,33 +357,40 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
 
     setSelectedTool(tool);
     setResult('');
+
+    // Prepopulate chat histories
+    if (tool.key === 'mock_interview') {
+      setChatHistory([
+        { sender: 'ai', text: `🎓 Assalomu alaykum, ${user.name || 'Talaba'}! Men xalqaro oliygoh Qabul Komissiyasi rahbariman. Siz bilan mock interview suhbatimiz doirasida g'oyat bevosita, ta'sirchan muloqot qilaman.\n\n"O'zingizni tanishtiring, qay qiziqishlaringiz va eng munosib hislatlaringiz evaziga ushbu mutaxassislikni tanlaganingizni aytib bera olasizmi?"` }
+      ]);
+    } else if (tool.key === 'ielts_speaking_partner') {
+      setChatHistory([
+        { sender: 'ai', text: `🗣️ *Hello, welcome to the IELTS Speaking simulated interactive session. I am Senior Examiner John.*\n\n"Let's initiate by discussing public transport in your hometown. How frequently do you utilize public transport, and do you feel the government should implement complimentary services for student levels?"` }
+      ]);
+    }
   };
 
   const executeAIRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTool || loading) return;
 
-    // Check limit first
-    const { isLocked } = checkUsageLimit(selectedTool.key);
-    if (isLocked) {
-      alert("Savollar tugadi! Iltimos, Premium Pro rejasini faollashtiring.");
+    // Check usage limits locally and remotely
+    const currentStatus = await checkCurrentLimit(selectedTool.key);
+    if (currentStatus.isLocked) {
+      onOpenPremium();
       return;
     }
 
     setLoading(true);
     setResult('');
 
+    const isChat = isInteractiveChat(selectedTool.key);
     let inputData: any = {};
-    if (selectedTool.key === 'chat') {
+
+    if (isChat) {
       inputData = { userMessage: chatMessage, history: chatHistory.slice(-8) };
       setChatHistory(prev => [...prev, { sender: 'user', text: chatMessage }]);
       setChatMessage('');
-    } else if (selectedTool.key === 'interview') {
-      const newHistory = [...interviewHistory];
-      newHistory[newHistory.length - 1].answer = currentInterviewAnswer;
-      setInterviewHistory(newHistory);
-      inputData = { major: interviewMajor, history: newHistory };
-      setCurrentInterviewAnswer('');
     } else {
       inputData = { ...formValues };
     }
@@ -284,420 +408,391 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
 
       const data = await response.json();
       if (response.ok && data.text) {
-        if (selectedTool.key === 'chat') {
+        if (isChat) {
           setChatHistory(prev => [...prev, { sender: 'ai', text: data.text }]);
-        } else if (selectedTool.key === 'interview') {
-          setInterviewHistory(prev => [...prev, { question: data.text }]);
         } else {
           setResult(data.text);
         }
 
-        // Record usage log locally and call main update usage
-        recordUsage(selectedTool.key);
-        onUpdateUsage(selectedTool.key);
+        // Real limit decrement ONLY ON SUCCESSFUL GENERATION CALL, preventing accidental limits deduction!
+        await recordUsageLocallyAndRemote(selectedTool.key);
       } else {
-        alert(data.error || "Ulanishda xatolik yuz berdi.");
+        alert(data.error || "Ulanishda xatolik yuz berdi. Qaytadan urinib ko'ring.");
       }
     } catch (err) {
       console.error(err);
-      alert("Platforma sun'iy intellekti bilan bog'lanishda muammo yuz berdi. Iltimos qaytadan urining.");
+      alert("Platforma sun'iy intellekti bilan bog'lanishda muammo yuz berdi. Qaytadan urining.");
     } finally {
       setLoading(false);
     }
   };
 
+  const filteredTools = activeCategory === 'all' 
+    ? tools 
+    : tools.filter(t => t.category === activeCategory);
+
   return (
-    <div className="w-full max-w-7xl mx-auto px-6 py-12" id="ai-center-root">
+    <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-12" id="ai-center-root">
+      
+      {/* HEADER HERO AREA */}
       <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-        <span className="bg-cyan-500/10 border border-cyan-500/20 px-4 py-1.5 rounded-full text-xs font-black text-cyan-500 uppercase tracking-widest font-mono">
-          TopGrand Ivy-League AI Suite
+        <span className="inline-flex items-center gap-2 bg-blue-600/10 border border-blue-400/20 px-4 py-1.5 rounded-full text-xs font-black text-blue-600 uppercase tracking-widest font-mono">
+          <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+          <span>TOPGRAND INTELLECT SUITE v3.0</span>
         </span>
-        <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-          Sun'iy Intellekt <br />
-          <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-            Tayyorgarlik Markazi
+        <h2 className="text-3xl md:text-5xl font-black text-blue-900 tracking-tight leading-tight">
+          Chet elga <br />
+          <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 bg-clip-text text-transparent">
+            Eksklyuziv 10 ta AI Funksiya
           </span>
         </h2>
-        <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-semibold">
-          Bizning 20 xil daxshatli sun'iy intellekt modullarimiz profilingizni tahlil qilib, portfolioingizni dunyo standartdariga to'liq moslashtiradi!
+        <p className="text-xs md:text-sm text-blue-905/70 font-semibold max-w-xl mx-auto leading-relaxed">
+          Konsalting firmalarsiz, bizning 10 xil daxshatli sun'iy intellekt modullarimiz profilingizni xavfsiz tahlil qilib, 100% grant kafolati va vizalarni loyihalaydi!
         </p>
+
+        {/* METRICS & KEY INFORMATION STATUS */}
+        <div className="flex flex-wrap justify-center items-center gap-3 md:gap-5 pt-4 text-xs font-mono font-bold">
+          <div className="bg-white/80 border border-blue-100 rounded-xl px-4 py-2 flex items-center gap-2 shadow-sm text-blue-900">
+            <span className="h-2 w-2 rounded-full bg-blue-500 animate-ping" />
+            <span>GEMINI_API_KEY:</span>
+            <span className="text-blue-600 font-extrabold uppercase bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md text-[10px]">Faol (Server)</span>
+          </div>
+
+          <div className="bg-white/80 border border-blue-100 rounded-xl px-4 py-2 flex items-center gap-2 shadow-sm text-blue-900">
+            <Clock className="h-3.5 w-3.5 text-blue-600" />
+            <span>Resetgacha:</span>
+            <span className="text-blue-700 font-black text-xs">{countdownText}</span>
+          </div>
+
+          <button 
+            onClick={clearUsageStats}
+            title="Usage limitlarini qayta tiklash (Faqat sinov uchun)"
+            className="p-2 bg-white/80 border border-blue-100 hover:border-red-300 text-blue-400 hover:text-red-500 rounded-xl transition cursor-pointer shadow-sm"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
         {!selectedTool ? (
-          /* TOOL GRID CATALOG */
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            id="ai-tools-grid"
+          /* FILTER CATEGORIES & GRID OF 10 TOOLS */
+          <motion.div 
+            key="catalog"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="space-y-8" 
+            id="catalog-container"
           >
-            {tools.map((tool) => {
-              const { isLocked, remaining, limit } = checkUsageLimit(tool.key);
-
-              return (
-                <div
-                  key={tool.key}
-                  onClick={() => handleSelectTool(tool)}
-                  className="group relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] border border-blue-100 bg-white p-6 transition duration-300 hover:-translate-y-1 hover:border-cyan-300 hover:shadow-xl hover:shadow-blue-500/10 cursor-pointer shadow-lg shadow-blue-500/5"
+            {/* Transparent elegant tab selection */}
+            <div className="flex flex-wrap justify-center gap-2 pb-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat.key}
+                  onClick={() => setActiveCategory(cat.key)}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition cursor-pointer border ${
+                    activeCategory === cat.key
+                      ? 'bg-blue-650 text-white border-blue-700/30 shadow-lg shadow-blue-500/10'
+                      : 'bg-white/80 text-blue-800 hover:text-blue-600 border-blue-100 hover:bg-white/95 shadow-sm'
+                  }`}
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className={`rounded-2xl bg-gradient-to-tr ${tool.color} p-3 text-white shadow-md`}>
-                        {React.createElement(tool.icon, { className: "h-5 w-5" })}
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Grid of 10 modern features */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTools.map((tool) => {
+                const IconComp = tool.icon;
+                const toolLimit = limits[tool.key];
+                const isLimitLocked = toolLimit?.isLocked || false;
+                const limitRemaining = toolLimit?.remaining ?? getToolLimit(tool.key);
+                const limitMax = toolLimit?.limit ?? getToolLimit(tool.key);
+
+                return (
+                  <motion.div
+                    key={tool.key}
+                    whileHover={{ scale: 1.015, y: -2 }}
+                    className="relative group rounded-3xl border border-blue-100 bg-white/85 p-6 flex flex-col justify-between shadow-xl shadow-blue-500/5 hover:shadow-blue-500/10 transition-all duration-300 backdrop-blur-md"
+                    id={`tool-card-${tool.key}`}
+                  >
+                    <div>
+                      {/* Popular & category indicator */}
+                      <div className="flex justify-between items-center mb-5">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-blue-500 bg-blue-50 border border-blue-100/40 px-2.5 py-1 rounded-full px-2">
+                          {tool.category === 'architect' && '🧠 The Architect'}
+                          {tool.category === 'executioner' && '✍️ The Ghost Writer'}
+                          {tool.category === 'simulator' && '🗣️ The Simulator'}
+                          {tool.category === 'strategist' && '🤝 The Strategist'}
+                        </span>
+                        {tool.popular && (
+                          <span className="flex items-center gap-1.5 text-[9px] font-black tracking-widest text-[#d97706] bg-amber-50 border border-amber-200/40 px-2.5 py-1 rounded-full uppercase">
+                            <Sparkles className="h-3 w-3 animate-spin text-amber-500" />
+                            Mashhur
+                          </span>
+                        )}
                       </div>
-                      {isLocked ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-100 px-2.5 py-1 text-[10px] font-mono font-extrabold text-red-500">
-                          <Lock className="h-3 w-3" /> Locked (Buy Pro)
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-100 px-2.5 py-1 text-[10px] font-mono font-bold text-emerald-600">
-                          {remaining === Infinity ? "Cheksiz" : `${remaining}/${limit} Qoldi`}
-                        </span>
-                      )}
+
+                      {/* Icon & Title */}
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-2xl bg-gradient-to-tr ${tool.color} text-white shadow-md shadow-blue-500/5 shrink-0`}>
+                          <IconComp className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-blue-900 leading-tight group-hover:text-blue-600 transition text-sm sm:text-base">
+                            {tool.title}
+                          </h3>
+                          <p className="text-xs text-blue-950/60 font-semibold mt-1.5 leading-relaxed">
+                            {tool.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Limits bar & Action */}
+                    <div className="mt-6 pt-5 border-t border-blue-50/60 flex items-center justify-between gap-4">
+                      <div className="text-[11px] font-mono font-bold">
+                        {user.isPremium ? (
+                          <span className="text-cyan-600 flex items-center gap-1">
+                            <Gem className="h-3 w-3" /> PRO: Cheksiz
+                          </span>
+                        ) : (
+                          <span className={`${isLimitLocked ? 'text-red-500' : 'text-blue-600'}`}>
+                            Limit: {limitRemaining} / {limitMax} query
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleSelectTool(tool)}
+                        className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1 cursor-pointer transition ${
+                          isLimitLocked && !user.isPremium
+                            ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
+                            : 'bg-blue-650 hover:bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        }`}
+                      >
+                        {isLimitLocked && !user.isPremium ? (
+                          <>Pro'ni Sotib Olish <Lock className="h-3.5 w-3.5" /></>
+                        ) : (
+                          <>Tahlil etish <ArrowRight className="h-3.5 w-3.5" /></>
+                        )}
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        ) : (
+          /* THIN, TRANSPARENT, ULTRA POLISHED FULL SCREEN WORKSPACE WITH TOP BACK BUTTON ONLY */
+          <motion.div
+            key="workspace"
+            initial={{ opacity: 0, scale: 0.99, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.99, y: -15 }}
+            className="w-full min-h-[75vh] rounded-3xl border border-white/60 bg-white/75 p-6 md:p-10 shadow-2xl backdrop-blur-2xl relative"
+            id="workspace-container"
+          >
+            {/* STRICT DIRECTIVE: SINGLE TOP BACK BUTTON ONLY */}
+            <div className="flex items-center justify-between mb-8 pb-5 border-b border-blue-100">
+              <button
+                onClick={() => setSelectedTool(null)}
+                className="flex items-center gap-2.5 px-4 py-2 rounded-xl border border-blue-200 bg-white hover:bg-blue-50 text-blue-700 font-extrabold text-xs transition cursor-pointer shadow-sm"
+              >
+                <ArrowLeft className="h-4 w-4 text-blue-600" />
+                <span>Orqaga Qaytish</span>
+              </button>
+
+              <div className="flex items-center gap-3">
+                <span className="text-xs uppercase font-extrabold tracking-widest text-blue-600 font-mono">
+                  {selectedTool.title}
+                </span>
+                {user.isPremium ? (
+                  <span className="inline-flex items-center gap-1 bg-cyan-100 text-cyan-705 border border-cyan-200 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase">
+                    <Gem className="h-3 w-3 text-cyan-600" /> PRO Faol
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase">
+                    Tekin
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Split layout: Form Inputs and Real-time detailed result inside Blue container with White letters */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+              
+              {/* Form Input fields */}
+              <div className="lg:col-span-5 h-full flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-3.5 mb-6">
+                    <div className="p-3 bg-blue-100 rounded-2xl text-blue-700">
+                      {React.createElement(selectedTool.icon, { className: 'h-6 w-6' })}
                     </div>
                     <div>
-                      <h3 className="text-base font-black text-slate-900 group-hover:text-blue-700 transition">
-                        {tool.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-2 font-medium leading-relaxed">
-                        {tool.description}
+                      <h3 className="text-lg font-black text-blue-900 leading-tight">{selectedTool.title}</h3>
+                      <p className="text-xs text-blue-800/60 font-semibold mt-1">
+                        Chet elga {selectedTool.category === 'architect' ? 'mukammal strategiya' : 'akademik hujjatlar tayyorlash'} moduli
                       </p>
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-50 mt-5 pt-4 flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-slate-400 font-semibold">
-                      Ivy Matrix Mode
-                    </span>
-                    <span className="text-xs text-blue-600 font-extrabold flex items-center gap-1">
-                      Modulni boshlash <ArrowRight className="h-3.5 w-3.5 text-blue-600" />
-                    </span>
-                  </div>
+                  {!isInteractiveChat(selectedTool.key) ? (
+                    // static form inputs
+                    <form onSubmit={executeAIRequest} className="space-y-4">
+                      {toolFields[selectedTool.key]?.map((field) => (
+                        <div key={field.id} className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-blue-900/80">
+                            {field.label}
+                          </label>
+                          {field.type === 'textarea' ? (
+                            <textarea
+                              rows={5}
+                              value={formValues[field.id] || ''}
+                              onChange={(e) => setFormValues({ ...formValues, [field.id]: e.target.value })}
+                              className="w-full rounded-2xl border border-blue-200 bg-white py-3 px-4 text-xs font-semibold text-slate-800 placeholder-blue-900/30 outline-none focus:border-blue-500 transition shadow-inner"
+                              placeholder={field.placeholder}
+                            ></textarea>
+                          ) : (
+                            <input
+                              type="text"
+                              value={formValues[field.id] || ''}
+                              onChange={(e) => setFormValues({ ...formValues, [field.id]: e.target.value })}
+                              className="w-full rounded-2xl border border-blue-200 bg-white py-3 px-4 text-xs font-semibold text-slate-800 placeholder-blue-900/30 outline-none focus:border-blue-500 transition shadow-inner"
+                              placeholder={field.placeholder}
+                            />
+                          )}
+                        </div>
+                      ))}
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className={`w-full py-4 rounded-2xl font-black text-xs text-white uppercase tracking-widest shadow-lg transition duration-200 cursor-pointer ${
+                          loading 
+                            ? 'bg-slate-350 cursor-not-allowed shadow-none' 
+                            : 'bg-blue-650 hover:bg-blue-600 shadow-blue-500/10 active:scale-95'
+                        }`}
+                        id="btn-execute-static"
+                      >
+                        {loading ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <RefreshCw className="animate-spin h-4 w-4" />
+                            Xalqaro AI tahlil qilmoqda...
+                          </span>
+                        ) : (
+                          "Sun'iy intellekt tahlilini olish ⚡"
+                        )}
+                      </button>
+                    </form>
+                  ) : (
+                    // Chat input rules
+                    <div className="space-y-4 mt-2">
+                      <p className="text-xs text-blue-800/70 leading-relaxed font-semibold">
+                        Siz jonli tarzda qabul xodimi yoki IELTS vakili bilan bevosita muloqot qilmoqdasiz. Quyidagi oynada savollarga javob bering va ishonchni sinang!
+                      </p>
+                      
+                      <div className="p-4 bg-teal-50/60 border border-teal-100 rounded-2xl text-xs text-teal-850 font-semibold leading-relaxed">
+                        ⚠️ **Suhbat Limitlari**: Bevosita {getToolLimit(selectedTool.key)} ta bepul savol berishingiz mumkin. Hozirda qo'yilgan barcha limitlar siz muvafferiyatli yuborganingizdan so'ng hisoblab chiqiladi.
+                      </div>
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-          </motion.div>
-        ) : (
-          /* SINGLE TOOL WORKSPACE IN PREMIUM FULL SCREEN SCREEN OVERLAY */
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-950 overflow-y-auto text-white p-6 md:p-10 flex flex-col items-center"
-            id="ai-workspace"
-          >
-            <div className="w-full max-w-4xl flex-grow flex flex-col justify-start py-4 space-y-8">
-              
-              {/* HEADER WITH ONLY GO-BACK BUTTON AT TOP */}
-              <div className="flex items-center justify-between pb-5 border-b border-slate-800">
-                <button
-                  onClick={() => setSelectedTool(null)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs font-black text-cyan-400 hover:bg-slate-850 hover:text-white transition cursor-pointer flex items-center gap-2 shadow-inner"
-                  id="btn-workspace-back"
-                >
-                  ← Katalogga qaytish
-                </button>
-                <div className="flex items-center gap-3">
-                  <span className="hidden sm:inline-flex text-[10px] uppercase font-black text-slate-500 tracking-widest bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-850">
-                    Ivy Matrix Active
-                  </span>
-                  <span className="text-xs font-bold font-mono text-cyan-405 bg-cyan-950/40 border border-cyan-900 px-3.5 py-1.5 rounded-xl">
-                    {selectedTool.title}
-                  </span>
+
+                <div className="pt-6 border-t border-blue-5/30 mt-6 md:mt-0 text-[11px] text-blue-900/40 font-bold font-mono">
+                  TopGrand AI Suite is secured by Firestore protection layers.
                 </div>
               </div>
 
-              {/* EVALUATE LOCKED STATUS OR ACTIVE TOOL CONTENT */}
-              {(() => {
-                const { isLocked, remaining, limit } = checkUsageLimit(selectedTool.key);
+              {/* Real-time responses: BLUE CONTAINER WITH WHITE TEXT */}
+              <div className="lg:col-span-7 flex flex-col">
+                <div className="flex-1 flex flex-col rounded-3xl bg-blue-700/90 border border-blue-900 p-6 md:p-8 min-h-[420px] max-h-[600px] overflow-hidden text-white shadow-inner relative justify-between">
+                  {/* Blue container headers */}
+                  <div className="flex justify-between items-center pb-3 border-b border-blue-600/40 mb-4 shrink-0">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-200 font-mono">
+                      Real-time AI Auditor outputs
+                    </span>
+                    <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+                  </div>
 
-                if (isLocked) {
-                  return (
-                    <div className="my-auto py-10 space-y-6 max-w-xl mx-auto text-center" id="tool-locked-warning">
-                      <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-tr from-amber-500 to-yellow-405 text-slate-950 p-4 shadow-xl shadow-yellow-500/10">
-                        <Gem className="h-9 w-9 animate-bounce" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <h3 className="text-2xl font-black text-white leading-tight">
-                          Premium Pro Obuna Talab Qilinadi!
-                        </h3>
-                        <p className="text-xs md:text-sm text-slate-400 leading-relaxed max-w-md mx-auto font-medium">
-                          {selectedTool.key === 'chat' || selectedTool.key === 'interview'
-                            ? `Siz ushbu interaktiv chat modulining kunlik ${limit} ta bepul so'rov imkoniyatidan to'liq foydalandingiz.`
-                            : `Siz bugungi ${limit} ta bepul tahlil qilish imkoniyatidan foydalandingiz.`}{" "}
-                          Davom etish va barcha premium AI imkoniyatlaridan cheksiz foydalanish uchun VIP Pro rejasiga o'ting.
-                        </p>
-                      </div>
-
-                      {/* Pro Benefits list */}
-                      <div className="space-y-3 bg-slate-900 border border-slate-850 p-6 rounded-[2rem] text-left text-xs md:text-sm max-w-md mx-auto shadow-inner">
-                        <h4 className="font-extrabold text-cyan-400 uppercase tracking-widest text-[11px] pb-2 border-b border-slate-800 flex items-center gap-1.5">
-                          <Sparkles className="h-4 w-4" />
-                          <span>Premium Pro VIP imtiyozlari:</span>
-                        </h4>
-                        <div className="space-y-3 mt-3 font-semibold text-slate-300">
-                          <div className="flex items-start gap-2.5">
-                            <Check className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-                            <span>Barcha 20+ Sun'iy Intellekt tahlillariga 100% cheksiz ruxsat</span>
-                          </div>
-                          <div className="flex items-start gap-2.5">
-                            <Check className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-                            <span>ChatGPT-4o & Gemini Pro elita modellari bilan real-vaqtda aloqa</span>
-                          </div>
-                          <div className="flex items-start gap-2.5">
-                            <Check className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-                            <span>Insholarni bexato kognitiv, so'z boyligi va IELTS darajasi tahriri</span>
-                          </div>
-                          <div className="flex items-start gap-2.5">
-                            <Check className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-                            <span>Interaktiv real-vaqt suhbatdagi barcha xatoliklar hisboti</span>
-                          </div>
+                  {/* Body display depending on interactive state */}
+                  <div className="flex-1 overflow-y-auto pr-2 space-y-4 text-xs font-semibold text-blue-100 leading-relaxed">
+                    {!isInteractiveChat(selectedTool.key) ? (
+                      // Display content
+                      result ? (
+                        <div className="whitespace-pre-line text-xs font-semibold text-white leading-relaxed">
+                          {result}
                         </div>
-                      </div>
-
-                      {/* Buy action button */}
-                      <div className="flex flex-col gap-3.5 max-w-md mx-auto pt-3">
-                        <button
-                          onClick={() => alert("Premium to'lov tizimi tez orada ishga tushadi! Yangilanishlarni kuzatib boring.")}
-                          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 active:scale-[0.98] transition font-black text-slate-950 text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-amber-500/10 cursor-pointer"
-                        >
-                          <Gem className="h-4 w-4" />
-                          <span>Obunani Sotib Olish</span>
-                        </button>
-                        
-                        <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-850 text-[10px] text-slate-500 font-bold font-mono">
-                          Navbatdagi bepul imkoniyat 24 soatdan so'ng avtomatik yangilanadi.
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-center opacity-70 p-5 space-y-3">
+                          <Compass className="h-10 w-10 text-cyan-300 animate-bounce" />
+                          <p className="text-blue-100 text-xs">
+                            Chap tomondagi jadval maydonlarini to'ldiring va hisobingiz uchun kuchli xalqaro AI tahlilini bosing.
+                          </p>
                         </div>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  /* ACTUAL TOOL ACTIVE INPUT FORM & RESULTS */
-                  <div className="space-y-6 flex-grow flex flex-col">
-                    <div className="flex items-center justify-between pb-1">
-                      <h3 className="text-xl font-black text-white flex items-center gap-2.5">
-                        <span className="p-2 rounded-xl bg-slate-900 text-cyan-400 border border-slate-800 shadow-md">
-                          {React.createElement(selectedTool.icon, { className: "h-5 w-5" })}
-                        </span>
-                        {selectedTool.title}
-                      </h3>
-                      {!user.isPremium && (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-bold font-mono">
-                          <Check className="h-4 w-4 text-emerald-500" />
-                          <span>Foydalanish: <b className="text-cyan-400">{remaining}/{limit}</b> qoldi</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <form onSubmit={executeAIRequest} className="space-y-5">
-                      {/* DYNAMIC FORM REGION ACCORDING TO SPECIFIED CONFIG */}
-                      {selectedTool.key === 'interview' && (
-                        <div className="space-y-4 flex flex-col">
-                          <div className="flex items-center gap-3 bg-slate-900/50 border border-slate-850/60 p-3 rounded-2xl">
-                            <label className="text-xs font-black text-cyan-400 uppercase tracking-wider">Suhbat Mutaxassisligi:</label>
-                            <select
-                              value={interviewMajor}
-                              onChange={(e) => setInterviewMajor(e.target.value)}
-                              className="bg-slate-950 text-white rounded-xl border border-slate-800 p-2 text-xs outline-none focus:border-cyan-400 font-extrabold"
+                      )
+                    ) : (
+                      // Interactive chats list
+                      <div className="space-y-3.5">
+                        {chatHistory.map((msg, i) => (
+                          <div 
+                            key={i} 
+                            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div 
+                              className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
+                                msg.sender === 'user' 
+                                  ? 'bg-cyan-505/20 border border-cyan-400/30 text-white font-extrabold ml-auto' 
+                                  : 'bg-white/10 border border-white/5 text-blue-50 mr-auto whitespace-pre-line'
+                              }`}
                             >
-                              <option value="Computer Science & AI">Kompyuter Ilmlari va Sun'iy Intellekt</option>
-                              <option value="Business Administration & MBA">Biznes Boshqaruvi va MBA</option>
-                              <option value="Medicine & Biology">Tibbiyot va Biologiya</option>
-                              <option value="Humanities & International Relations">Siyosatshunoslik va Xalqaro munosabatlar</option>
-                              <option value="Engineering & Robotics">Muhandislik va Robototexnika</option>
-                            </select>
-                          </div>
-
-                          {/* Interview Chat Bubble Container */}
-                          <div className="space-y-3.5 max-h-[350px] overflow-y-auto p-5 rounded-2xl bg-slate-900 border border-slate-800 text-xs">
-                            {interviewHistory.map((chat, idx) => (
-                              <div key={idx} className="space-y-3">
-                                {/* Interviewer side */}
-                                <div className="rounded-2xl bg-blue-500/10 border border-blue-500/20 p-4 text-cyan-300">
-                                  <p className="font-bold flex items-center gap-1 text-[11px] uppercase tracking-wider">
-                                    <Milestone className="h-3 w-3 text-cyan-400 animate-pulse" />
-                                    <span>TopGrand Qabul Komissiyasi A'zosi</span>
-                                  </p>
-                                  <p className="mt-2 font-medium leading-relaxed whitespace-pre-line">{chat.question}</p>
-                                </div>
-
-                                {/* Student response side if exists */}
-                                {chat.answer && (
-                                  <div className="rounded-2xl bg-slate-950 border border-slate-850 p-4 text-right max-w-lg ml-auto shadow-md">
-                                    <p className="font-extrabold text-[#e0e9ff] text-[11px] uppercase tracking-wider">Siz ({user.name})</p>
-                                    <p className="mt-1.5 font-medium leading-relaxed text-slate-300">{chat.answer}</p>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Input if loading is not active */}
-                          <div className="relative">
-                            <input
-                              type="text"
-                              required
-                              placeholder="O'zbek tilida o'z javobingizni isbotlab, batafsil kiritib yuboring..."
-                              value={currentInterviewAnswer}
-                              onChange={(e) => setCurrentInterviewAnswer(e.target.value)}
-                              className="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl py-4 pl-5 pr-14 text-xs md:text-sm outline-none focus:border-cyan-400 transition"
-                            />
-                            <button
-                              type="submit"
-                              disabled={loading || !currentInterviewAnswer}
-                              className="absolute right-2.5 top-2.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 p-2 text-blue-950 transition cursor-pointer disabled:opacity-50"
-                            >
-                              <ArrowRight className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {selectedTool.key === 'chat' && (
-                        <div className="space-y-4 flex flex-col">
-                          <div className="space-y-3.5 max-h-[350px] overflow-y-auto p-5 rounded-2xl bg-slate-900 border border-slate-800 text-xs">
-                            {chatHistory.length === 0 && (
-                              <p className="text-cyan-400/85 text-center py-8 font-semibold">Chet elda o'qish, to'liq grantlar, insholar yoki viza bo'yicha mustaqil maslahatchiga o'zingizni qiziqtirgan savolni yo'llang.</p>
-                            )}
-                            {chatHistory.map((bubble, i) => (
-                              <div
-                                key={i}
-                                className={`p-4 rounded-2xl border ${
-                                  bubble.sender === 'user'
-                                    ? 'bg-slate-950 border-slate-850 text-right max-w-lg ml-auto shadow-md'
-                                    : 'bg-blue-500/10 border-blue-500/20 text-left text-cyan-200 whitespace-pre-line leading-relaxed font-semibold'
-                                }`}
-                              >
-                                <p className="font-black text-[10px] uppercase tracking-wider">{bubble.sender === 'user' ? `Siz (${user.name})` : 'AI Konsalting Mutaxassisi'}</p>
-                                <p className="mt-1.5 font-medium">{bubble.text}</p>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="relative">
-                            <input
-                              type="text"
-                              required
-                              placeholder="Maslahat olish uchun savol yo'llang..."
-                              value={chatMessage}
-                              onChange={(e) => setChatMessage(e.target.value)}
-                              className="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl py-4 pl-5 pr-14 text-xs md:text-sm outline-none focus:border-cyan-400 transition"
-                            />
-                            <button
-                              type="submit"
-                              disabled={loading || !chatMessage}
-                              className="absolute right-2.5 top-2.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 p-2 text-blue-950 transition cursor-pointer disabled:opacity-50"
-                            >
-                              <ArrowRight className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* DYNAMIC METADATA DRIVEN FORM INPUT FIELDS */}
-                      {selectedTool.key !== 'chat' && selectedTool.key !== 'interview' && (
-                        <div className="space-y-4 text-left">
-                          {(toolFields[selectedTool.key] || []).map((field) => (
-                            <div key={field.id} className="space-y-1.5">
-                              <label className="block text-xs font-black text-cyan-400 uppercase tracking-wider">{field.label}</label>
-                              {field.type === 'textarea' ? (
-                                <textarea
-                                  required
-                                  rows={6}
-                                  placeholder={field.placeholder}
-                                  value={formValues[field.id] || ''}
-                                  onChange={(e) => setFormValues(prev => ({ ...prev, [field.id]: e.target.value }))}
-                                  className="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl py-3 px-4 text-xs md:text-sm outline-none focus:border-cyan-400 focus:bg-slate-950 transition duration-150 font-semibold"
-                                />
-                              ) : field.type === 'select' ? (
-                                <select
-                                  value={formValues[field.id] || ''}
-                                  onChange={(e) => setFormValues(prev => ({ ...prev, [field.id]: e.target.value }))}
-                                  className="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl py-3 px-4 text-xs md:text-sm outline-none focus:border-cyan-400 focus:bg-slate-950 transition duration-150 font-semibold"
-                                >
-                                  {(field.options || []).map(opt => (
-                                    <option key={opt} value={opt} className="bg-slate-900 text-white">{opt}</option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <input
-                                  type={field.type}
-                                  required
-                                  placeholder={field.placeholder}
-                                  value={formValues[field.id] || ''}
-                                  onChange={(e) => setFormValues(prev => ({ ...prev, [field.id]: e.target.value }))}
-                                  className="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl py-3 px-4 text-xs md:text-sm outline-none focus:border-cyan-400 focus:bg-slate-950 transition duration-150 font-semibold"
-                                />
-                              )}
+                              {msg.text}
                             </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Submit action */}
-                      {selectedTool.key !== 'chat' && selectedTool.key !== 'interview' && (
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="w-full relative flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 hover:brightness-110 active:scale-[0.98] transition font-black text-white text-xs md:text-sm uppercase tracking-widest shadow-xl shadow-blue-500/20 cursor-pointer"
-                          id="btn-workspace-submit"
-                        >
-                          {loading ? (
-                            <>
-                              <RefreshCw className="h-4.5 w-4.5 animate-spin text-white" />
-                              <span>Sun'iy Intellekt Tahlil Qilmoqda...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="h-4.5 w-4.5 text-white" />
-                              <span>100% Bexato Tahlil Qilish</span>
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </form>
-
-                    {/* LOADING GRAPHICS */}
-                    {loading && selectedTool.key !== 'chat' && selectedTool.key !== 'interview' && (
-                      <div className="flex flex-col items-center justify-center py-10 space-y-3" id="ai-loading">
-                        <div className="relative flex h-10 w-10">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-10 w-10 bg-blue-600 flex items-center justify-center">
-                            <Sparkles className="h-5 w-5 text-white animate-spin-slow" />
-                          </span>
-                        </div>
-                        <p className="text-xs text-blue-400 font-extrabold text-center">Bizning professional model tizim bilan bog'lanmoqda, tahlil yakunlanmoqda...</p>
+                          </div>
+                        ))}
+                        {loading && (
+                          <div className="flex justify-start">
+                            <span className="p-3 bg-white/10 border border-white/5 rounded-2xl text-[10px] uppercase font-mono animate-pulse tracking-wider">
+                              AI xodimi tahlillamoqda...
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    )}
-
-                    {/* AI RESULTS CONTAINER */}
-                    {result && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="p-6 rounded-3xl bg-slate-900 border border-slate-800 text-xs md:text-sm text-slate-100 whitespace-pre-line leading-relaxed font-semibold space-y-4 shadow-inner mt-4 text-left"
-                        id="ai-results-panel"
-                      >
-                        <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-                          <Sparkles className="h-4.5 w-4.5 text-cyan-400 animate-pulse" />
-                          <span className="font-extrabold text-cyan-405">TopGrand AI Tahlil Hisoboti</span>
-                        </div>
-                        <p className="whitespace-pre-wrap text-slate-100">{result}</p>
-                      </motion.div>
                     )}
                   </div>
-                );
-              })()}
+
+                  {/* Footer interface mapping if interactive chat is used */}
+                  {isInteractiveChat(selectedTool.key) && (
+                    <form onSubmit={executeAIRequest} className="mt-4 pt-3 border-t border-blue-600/40 flex gap-2 shrink-0">
+                      <input
+                        type="text"
+                        value={chatMessage}
+                        disabled={loading}
+                        onChange={(e) => setChatMessage(e.target.value)}
+                        className="flex-1 rounded-xl bg-white/5 border border-white/10 py-3 px-4 text-xs font-semibold text-white placeholder-blue-200/50 outline-none focus:border-cyan-400 transition"
+                        placeholder="Javobingizni yoki fikringizni yozing..."
+                      />
+                      <button
+                        type="submit"
+                        disabled={loading || !chatMessage.trim()}
+                        className="p-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 font-bold text-white shadow-md active:scale-95 transition flex items-center justify-center cursor-pointer"
+                      >
+                        <Send className="h-4 w-4" />
+                      </button>
+                    </form>
+                  )}
+
+                </div>
+              </div>
 
             </div>
+
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 }

@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with registration details and subscription status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique user UID from Firebase Auth" },
+        "name": { "type": "string", "description": "First name of the student" },
+        "surname": { "type": "string", "description": "Last name of the student" },
+        "email": { "type": "string", "format": "email", "description": "Email address of the student" },
+        "isPremium": { "type": "boolean", "description": "Whether the user has PRO account status" }
+      },
+      "required": ["id", "name", "surname", "email", "isPremium"]
+    },
+    "UsageLog": {
+      "title": "Usage Log",
+      "description": "Log tracking 24-hour request limit and timestamps for individual tools",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner of the usage limit" },
+        "toolKey": { "type": "string", "description": "Individual identifier of the AI tool" },
+        "timestamps": { "type": "array", "description": "Array of ISO string timestamps on successful run" }
+      },
+      "required": ["userId", "toolKey", "timestamps"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Personal profile collections"
+    },
+    "/users/{userId}/usage/{toolKey}": {
+      "schema": "UsageLog",
+      "description": "Limits and usage collections for each specific tool and user"
+    }
+  }
+}

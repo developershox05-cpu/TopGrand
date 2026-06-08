@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reuseable global helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User entity validation
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'name', 'surname', 'email', 'isPremium'])
+        && data.keys().size() == 5
+        && data.id is string
+        && data.name is string
+        && data.name.size() <= 128
+        && data.surname is string
+        && data.surname.size() <= 128
+        && data.email is string
+        && data.email.size() <= 128
+        && data.isPremium is bool;
+    }
+
+    // UsageLog entity validation
+    function isValidUsageLog(data) {
+      return data.keys().hasAll(['userId', 'toolKey', 'timestamps'])
+        && data.keys().size() == 3
+        && data.userId is string
+        && data.toolKey is string
+        && data.timestamps is list;
+    }
+
+    // Match rules
+    match /users/{userId} {
+      allow get, write: if isOwner(userId) && isValidUser(incoming());
+      allow read: if isOwner(userId);
+
+      match /usage/{toolKey} {
+        allow get, write: if isOwner(userId) && isValidId(toolKey) && isValidUsageLog(incoming());
+        allow read: if isOwner(userId);
+      }
+    }
+  }
+}
