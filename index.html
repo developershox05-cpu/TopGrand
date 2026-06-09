@@ -1,13 +1,162 @@
 <!doctype html>
-<html lang="en">
+<html lang="uz">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TopGrands</title>
+    <title>TopGrands - AI Prep Center</title>
+    <!-- Simple styled diagnostic element, hidden by default -->
+    <style>
+      #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+      .loader-spinner {
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid #2563eb;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .diagnostic-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        display: none;
+      }
+      .diagnostic-title {
+        color: #ef4444;
+        font-weight: 800;
+        font-size: 18px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .diagnostic-text {
+        font-size: 14px;
+        color: #334155;
+        line-height: 1.6;
+      }
+      .diagnostic-steps {
+        background: #f1f5f9;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 12px;
+        color: #0f172a;
+        margin-top: 12px;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+    </style>
   </head>
-  <body>
+  <body class="bg-slate-50">
+    <!-- Fail-safe loading screen and diagnostics -->
+    <div id="loading-overlay">
+      <div class="loader-spinner" id="diagnostic-spinner"></div>
+      <div style="font-size: 15px; font-weight: 600; color: #1e293b; margin-bottom: 8px;" id="diagnostic-status">Yuklanmoqda / Loading...</div>
+      
+      <div class="diagnostic-card" id="diagnostic-error-card">
+        <div class="diagnostic-title">
+          ⚠️ Xatolik aniqlandi / Deployment Warning
+        </div>
+        <div class="diagnostic-text">
+          <p><strong>Uzbek:</strong> Veb-sayt xom (uncompiled) rejimda yuklandi yoki brauzerda xatolik yuz berdi. Iltimos, quyidagi qadamlarni bajaring:</p>
+          <div class="diagnostic-steps">1. Cloudflare Pages portalida "Build output directory"ni "dist" deb sozlang.
+2. "Build command" bo'limiga "npm run build" deb yozing.
+3. Agar drag-and-drop orqali ZIP yuklayotgan bo'lsangiz, butun loyihani emas, faqat loyiha yaratilganidan keyingi "dist" papkasining ichidagilarini ZIP qilib yuklang! Dilshodbek, shunda sayt xatosiz bir urinishda ochiladi.</div>
+          
+          <p style="margin-top: 16px;"><strong>English:</strong> The web app loaded in raw mode or a runtime error occurred. Please follow these steps:</p>
+          <div class="diagnostic-steps">1. Set "Build command" to: npm run build
+2. Set "Publish directory" / "Build output directory" to: dist
+3. If using drag-and-drop, upload ONLY the contents of the compiled "dist" folder, NOT the root project folder!</div>
+        </div>
+        <div id="error-details" style="margin-top: 15px; font-size: 11px; color: #64748b; font-family: monospace; max-height: 100px; overflow-y: auto; background: #fafafa; padding: 6px; border: 1px solid #e2e8f0; border-radius: 4px;"></div>
+      </div>
+    </div>
+
     <div id="root"></div>
+
+    <script>
+      // Global error trackers to prevent blank white page
+      window.addEventListener('error', function(e) {
+        console.error("Caught error:", e);
+        // Clean some security errors that are uncritical
+        if (e.message && e.message.indexOf("ResizeObserver") !== -1) return;
+        showDiagnosticError(e.message || "Unknown script compilation/loading error");
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error("Caught rejection:", e);
+        showDiagnosticError(e.reason ? (e.reason.message || String(e.reason)) : "Unhandled Promise Rejection");
+      });
+
+      function showDiagnosticError(message) {
+        var spinner = document.getElementById('diagnostic-spinner');
+        var status = document.getElementById('diagnostic-status');
+        var card = document.getElementById('diagnostic-error-card');
+        var details = document.getElementById('error-details');
+        
+        if (spinner) spinner.style.display = 'none';
+        if (status) status.style.display = 'none';
+        if (card) card.style.display = 'block';
+        if (details) details.textContent = "Error Details: " + message;
+      }
+
+      // If React fails to render or mount within 4 seconds, offer diagnostic help
+      setTimeout(function() {
+        var rootNode = document.getElementById('root');
+        var overlay = document.getElementById('loading-overlay');
+        if (rootNode && rootNode.innerHTML === '') {
+          showDiagnosticError("React application failed to mount within 4 seconds. Please check your static folder structure.");
+        } else if (overlay) {
+          // If mounted fine, hide overlay
+          overlay.style.display = 'none';
+        }
+      }, 4000);
+
+      // Simple mutation observer to auto-hide loading screen once React mounts
+      var observer = new MutationObserver(function(mutations) {
+        var rootNode = document.getElementById('root');
+        var overlay = document.getElementById('loading-overlay');
+        if (rootNode && rootNode.innerHTML !== '') {
+          if (overlay) overlay.style.display = 'none';
+          observer.disconnect();
+        }
+      });
+      var rootNode = document.getElementById('root');
+      if (rootNode) {
+        observer.observe(rootNode, { childList: true, subtree: true });
+        // Initial check
+        if (rootNode.innerHTML !== '') {
+          var overlay = document.getElementById('loading-overlay');
+          if (overlay) overlay.style.display = 'none';
+          observer.disconnect();
+        }
+      }
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
