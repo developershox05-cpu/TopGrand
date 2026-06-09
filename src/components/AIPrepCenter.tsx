@@ -8,6 +8,7 @@ import { User } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { getApiUrl } from '../lib/api';
 
 interface AIPrepCenterProps {
   user: User;
@@ -602,7 +603,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
         setChatMessage('');
       }
 
-      const response = await fetch('/api/ai/generate', {
+      const response = await fetch(getApiUrl('/api/ai/generate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -832,39 +833,39 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
               </div>
             </div>
 
-            {/* Split workspace layout */}
-            <div className="flex-1 overflow-y-auto lg:overflow-hidden p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch text-white">
+            {/* Completely redefined responsive and gorgeous modern split workspace */}
+            <div className="flex-1 overflow-hidden flex flex-col lg:flex-row text-white bg-[#030612]/95 relative" id="detailed-workspace-redesign">
               
-              {/* Left Side: Inputs list & execution instructions */}
-              <div className="lg:col-span-12 xl:col-span-5 flex flex-col justify-between text-left lg:overflow-y-auto lg:max-h-full pr-2 space-y-6">
-                <div>
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className={`p-4 rounded-2xl bg-gradient-to-tr ${selectedTool.color} text-white shadow-xl`}>
-                      {React.createElement(selectedTool.icon, { className: 'h-6.5 w-6.5 stroke-[2.5px]' })}
+              {chatHistory.length === 0 ? (
+                // INTRO & FORM ENTRY LAYOUT - Beautiful Centered Stage
+                <div className="flex-grow overflow-y-auto px-4 py-8 md:py-16 flex items-center justify-center w-full z-10" id="intro-entry-stage">
+                  <div className="w-full max-w-2xl bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 md:p-10 shadow-2xl space-y-8 animate-fade-in text-center balance">
+                    
+                    {/* Tool Icon & Badge */}
+                    <div className="flex flex-col items-center space-y-3">
+                      <div className={`p-5 rounded-3xl bg-gradient-to-tr ${selectedTool.color} text-white shadow-lg shadow-indigo-500/10`}>
+                        {React.createElement(selectedTool.icon, { className: 'h-8 w-8 stroke-[2.2px]' })}
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-mono font-black text-cyan-400 uppercase tracking-widest bg-cyan-400/10 border border-cyan-400/20 px-3 py-1 rounded-full">{selectedTool.category.replace(/_/g, " ")}</span>
+                        <h3 className="text-xl md:text-2xl font-black text-white leading-tight pt-2">{selectedTool.title}</h3>
+                        <p className="text-xs text-blue-200/60 max-w-md mx-auto">{selectedTool.description}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg md:text-xl font-extrabold text-white leading-tight">{selectedTool.title}</h3>
-                      <p className="text-xs text-blue-200/60 mt-1 font-bold uppercase tracking-wider">
-                        Bo'lim: <span className="text-cyan-400">{selectedTool.category.replace(/_/g, " ")}</span>
-                      </p>
-                    </div>
-                  </div>
 
-                  {/* Render inputs statically only if chat is not active yet */}
-                  {chatHistory.length === 0 ? (
-                    // Static forms entries
-                    <form onSubmit={executeAIRequest} className="space-y-4">
+                    {/* Dynamic Targeted Input Forms */}
+                    <form onSubmit={executeAIRequest} className="space-y-5 text-left md:max-w-xl mx-auto">
                       {toolFields[selectedTool.key]?.map((field) => (
-                        <div key={field.id} className="space-y-1.5 text-left">
-                          <label className="block text-xs font-black text-cyan-300 uppercase tracking-wider">
+                        <div key={field.id} className="space-y-2">
+                          <label className="block text-[11px] font-black text-cyan-300 uppercase tracking-wider">
                             {field.label}
                           </label>
                           {field.type === 'textarea' ? (
                             <textarea
-                              rows={5}
+                              rows={4}
                               value={formValues[field.id] || ''}
                               onChange={(e) => setFormValues({ ...formValues, [field.id]: e.target.value })}
-                              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 px-4 text-xs font-extrabold text-[#090d23] placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors shadow-sm"
+                              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 py-4 px-4 text-xs font-bold text-white placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-all shadow-inner"
                               placeholder={field.placeholder}
                             ></textarea>
                           ) : (
@@ -872,19 +873,20 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                               type="text"
                               value={formValues[field.id] || ''}
                               onChange={(e) => setFormValues({ ...formValues, [field.id]: e.target.value })}
-                              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 px-4 text-xs font-extrabold text-[#090d23] placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors shadow-sm"
+                              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 py-4 px-4 text-xs font-bold text-white placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-all shadow-inner"
                               placeholder={field.placeholder}
                             />
                           )}
                         </div>
                       ))}
 
+                      {/* Launch Button */}
                       <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full py-4 rounded-2xl font-black text-xs text-white uppercase tracking-widest shadow-xl transition-all duration-200 cursor-pointer ${
+                        className={`w-full py-4 rounded-2xl font-black text-xs text-white uppercase tracking-widest shadow-xl shadow-cyan-950/10 transition-all duration-200 cursor-pointer mt-4 ${
                           loading 
-                            ? 'bg-slate-850 border border-white/5 shadow-none cursor-not-allowed opacity-[0.8]' 
+                            ? 'bg-slate-800 border border-white/5 opacity-50 cursor-not-allowed' 
                             : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110 active:scale-[0.98]'
                         }`}
                         id="btn-execute-static"
@@ -892,130 +894,117 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                         {loading ? (
                           <span className="flex items-center justify-center gap-2">
                             <RefreshCw className="animate-spin h-4 w-4 text-cyan-300" />
-                            AI Tahlil qilmoqda...
+                            Komissiya tahlil qilmoqda...
                           </span>
                         ) : (
                           "AI Tahlilini olish ⚡"
                         )}
                       </button>
                     </form>
-                  ) : (
-                    // Interactive Active Chat dialogue logs instructions
-                    <div className="space-y-5">
-                      <div className="p-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 text-xs text-slate-100 leading-relaxed font-semibold animate-fade-in">
-                        <p className="font-extrabold text-cyan-400 mb-1 flex items-center gap-1">
-                          <Sparkles className="h-4.5 w-4.5" />
-                          <span>Jonli Muloqot Faollashdi!</span>
-                        </p>
-                        Ushbu modulda kognitiv tahlil yakunlandi. AI taqdim etgan tahlil bo'yicha savollarga javob bering yoki to'g'ridan-to'g'ri o'ng paneldagi konsolda muloqotni davom ettiring!
-                      </div>
-                      
-                      <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-xs text-amber-300 leading-relaxed font-bold animate-fade-in">
-                        ⚠️ **Suhbat tartibi**: Bosh sahifa yoki katalogga qaytsangiz suhbat tarixi tozalanadi. Hozirgi mavzuni oxirigacha tahlil qiling.
-                      </div>
-
-                      {/* Restart tool button */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setChatHistory([]);
-                          setResult('');
-                        }}
-                        className="w-full py-3 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-extrabold text-xs transition cursor-pointer text-center active:scale-[0.98]"
-                      >
-                        Ma'lumotlarni tozalash va yangidan boshlash
-                      </button>
-                    </div>
-                  )}
+                  </div>
                 </div>
-
-                <div className="pt-6 border-t border-white/10 mt-8 text-[10px] text-blue-200/30 font-mono font-bold uppercase tracking-widest xl:block hidden">
-                  Secure Intelligence Connection Established.
-                </div>
-              </div>
-
-              {/* Right Side: Log Console with extremely readable pure white lettering */}
-              <div className="lg:col-span-12 xl:col-span-7 flex flex-col h-[500px] lg:h-full justify-between">
-                <div className="flex-1 flex flex-col rounded-3xl border border-white/15 bg-slate-900/60 p-5 md:p-7 overflow-hidden text-white shadow-inner justify-between h-full">
+              ) : (
+                // HIGH QUALITY INTERACTIVE CONVERSATION SCREEN
+                <div className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden" id="interactive-conversation-stage">
                   
-                  {/* Title Console log */}
-                  <div className="flex justify-between items-center pb-3 border-b border-white/5 mb-4 shrink-0 font-mono text-[9px] text-cyan-400 font-extrabold tracking-widest uppercase">
-                    <span>TopGrand AI Model Stream Console</span>
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-ping" />
+                  {/* Floating left information sidebar (Collapsible or thin on desktop) */}
+                  <div className="w-full lg:w-[280px] bg-slate-950/60 border-b lg:border-b-0 lg:border-r border-white/5 p-5 flex flex-col justify-between shrink-0 space-y-4 text-left">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2.5 rounded-xl bg-gradient-to-tr ${selectedTool.color} text-white`}>
+                          {React.createElement(selectedTool.icon, { className: 'h-5 w-5 stroke-[2px]' })}
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-white">{selectedTool.title}</h4>
+                          <span className="text-[9px] font-mono text-cyan-400">SESSION ACTIVE</span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 bg-cyan-500/5 border border-cyan-500/10 rounded-2xl text-[10px] text-blue-200/80 leading-relaxed font-semibold">
+                        💡 **Jonli Muloqot faollashdi!** Komissiya tahlili yakunlandi. AI taqdim etgan tahlillar bo'yicha keyingi savollaringizni to'g'ridan-to'g'ri bering.
+                      </div>
+
+                      <div className="p-3.5 bg-amber-500/5 border border-amber-500/10 rounded-2xl text-[10px] text-amber-200/80 leading-relaxed font-semibold">
+                        ⚠️ **Eslatma**: Bosh sahifa yoki katalogga qaytsangiz, suhbat tarixi tozalanadi.
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChatHistory([]);
+                        setResult('');
+                      }}
+                      className="w-full py-3 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white font-extrabold text-[11px] transition cursor-pointer text-center active:scale-[0.98]"
+                    >
+                      Muloqotni qayta boshlash
+                    </button>
                   </div>
 
-                  {/* Conversations Thread output box */}
-                  <div className="flex-grow overflow-y-auto pr-2 space-y-4 text-xs font-semibold leading-relaxed text-white text-left">
-                    {chatHistory.length === 0 ? (
-                      // Empty state
-                      <div className="h-full flex flex-col items-center justify-center text-center opacity-45 p-5 space-y-3 my-auto">
-                        <Compass className="h-9 w-9 text-cyan-300 animate-bounce" />
-                        <p className="text-blue-100 text-xs font-bold leading-normal">
-                          Chap tomondagi jadval maydonlarini to'ldiring va tahlil tugmasini bosing.
-                        </p>
-                      </div>
-                    ) : (
-                      // Active chat dialogue boxes (User and AI)
-                      <div className="space-y-4">
-                        {chatHistory.map((msg, i) => (
+                  {/* Primary Chat stream box */}
+                  <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-950/10">
+                    
+                    {/* Message list viewport container */}
+                    <div className="flex-grow overflow-y-auto p-4 md:p-8 space-y-6 text-left">
+                      {chatHistory.map((msg, i) => (
+                        <div 
+                          key={i} 
+                          className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
+                        >
                           <div 
-                            key={i} 
-                            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                            className={`max-w-[85%] sm:max-w-xl rounded-3xl p-5 text-sm leading-relaxed ${
+                              msg.sender === 'user' 
+                                ? 'bg-blue-600 border border-blue-500 text-white font-extrabold ml-auto shadow-lg shadow-blue-900/10' 
+                                : 'bg-slate-900/70 border border-white/5 text-slate-100 mr-auto shadow-md'
+                            }`}
                           >
-                            <div 
-                              className={`max-w-[85%] rounded-[1.5rem] px-4 py-3.5 text-xs md:text-sm leading-relaxed ${
-                                msg.sender === 'user' 
-                                  ? 'bg-blue-600 border border-blue-500 text-white font-extrabold ml-auto shadow-sm shadow-blue-900/10' 
-                                  : 'bg-slate-800 border border-slate-755 text-slate-100 mr-auto whitespace-pre-line font-bold'
-                              }`}
-                            >
-                              <div className={`text-[8px] uppercase tracking-wider font-mono font-black mb-1 ${
-                                msg.sender === 'user' ? 'text-blue-200' : 'text-cyan-400'
-                              }`}>
-                                {msg.sender === 'user' ? 'Siz kiritgan ma\'lumot' : 'AI Maslahatchi'}
-                              </div>
-                              <div className="prose prose-invert max-w-none text-xs md:text-sm leading-relaxed">
-                                {msg.text}
-                              </div>
+                            <div className={`text-[8px] uppercase tracking-wider font-mono font-black mb-2 ${
+                              msg.sender === 'user' ? 'text-blue-100' : 'text-cyan-400'
+                            }`}>
+                              {msg.sender === 'user' ? 'Siz kiritgan ma\'lumot' : 'AI Maslahatchi'}
+                            </div>
+                            <div className="prose prose-invert max-w-none text-xs md:text-sm leading-relaxed break-words whitespace-pre-line">
+                              {msg.text}
                             </div>
                           </div>
-                        ))}
-                        
-                        {loading && (
-                          <div className="flex justify-start animate-pulse">
-                            <span className="p-4 bg-slate-800 border border-slate-700 text-cyan-300 rounded-[1.5rem] text-[11px] font-bold font-mono tracking-wider flex items-center gap-2">
-                              <RefreshCw className="animate-spin h-3.5 w-3.5 text-cyan-400" />
-                              Sun'iy intellekt tahlil qilmoqda...
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      ))}
+
+                      {loading && (
+                        <div className="flex justify-start animate-pulse">
+                          <span className="px-5 py-4 bg-slate-900 border border-white/10 text-cyan-300 rounded-3xl text-xs font-bold font-mono tracking-wider flex items-center gap-2">
+                            <RefreshCw className="animate-spin h-4 w-4 text-cyan-400" />
+                            AI Tahlil qilmoqda...
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Continuous Messaging Input Box at the bottom */}
+                    <div className="p-4 bg-slate-900/40 border-t border-white/5 backdrop-blur-md shrink-0">
+                      <form onSubmit={executeAIRequest} className="max-w-3xl mx-auto flex gap-2 w-full">
+                        <input
+                          type="text"
+                          value={chatMessage}
+                          disabled={loading}
+                          onChange={(e) => setChatMessage(e.target.value)}
+                          className="flex-1 rounded-2xl bg-slate-950 border border-white/10 py-4 px-5 text-xs md:text-sm font-bold text-white placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
+                          placeholder="Navbatdagi savolingiz yoki xabaringizni yozing..."
+                        />
+                        <button
+                          type="submit"
+                          disabled={loading || !chatMessage.trim()}
+                          className="px-5 py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 border border-blue-500 font-extrabold text-white shadow-md active:scale-95 transition flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <Send className="h-4 w-4" />
+                        </button>
+                      </form>
+                    </div>
+
                   </div>
 
-                  {/* Continuous User Input form at footer */}
-                  {chatHistory.length > 0 && (
-                    <form onSubmit={executeAIRequest} className="mt-4 pt-4 border-t border-white/5 flex gap-2 shrink-0">
-                      <input
-                        type="text"
-                        value={chatMessage}
-                        disabled={loading}
-                        onChange={(e) => setChatMessage(e.target.value)}
-                        className="flex-1 rounded-2xl bg-white border border-slate-300 py-3.5 px-4 text-xs font-extrabold text-slate-950 placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
-                        placeholder="AI maslahatchiga savol bering yoki javob yozing..."
-                      />
-                      <button
-                        type="submit"
-                        disabled={loading || !chatMessage.trim()}
-                        className="p-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 border border-blue-500 font-extrabold text-white shadow-md active:scale-95 transition flex items-center justify-center cursor-pointer"
-                      >
-                        <Send className="h-4.5 w-4.5" />
-                      </button>
-                    </form>
-                  )}
-
                 </div>
-              </div>
+              )}
 
             </div>
 

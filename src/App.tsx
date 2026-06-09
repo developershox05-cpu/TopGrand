@@ -14,10 +14,23 @@ import AIPrepCenter from './components/AIPrepCenter';
 import AuthModal from './components/AuthModal';
 import HomeSection from './components/HomeSection';
 import { motion, AnimatePresence } from 'motion/react';
+import { translations } from './translations';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home'); // home, all, courses, ai, uz, apply
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Dynamic Language Selection persistence
+  const [currentLang, setCurrentLang] = useState<'uz' | 'en' | 'ru'>(() => {
+    const saved = localStorage.getItem('topgrand_lang');
+    return (saved === 'en' || saved === 'ru' || saved === 'uz') ? saved : 'uz';
+  });
+
+  const handleSetLang = (lang: 'uz' | 'en' | 'ru') => {
+    setCurrentLang(lang);
+    localStorage.setItem('topgrand_lang', lang);
+  };
+
   const [user, setUser] = useState<User>({
     id: '',
     name: '',
@@ -99,12 +112,12 @@ export default function App() {
   };
 
   const navigationItems = [
-    { id: 'home', label: 'Bosh Sahifa', desc: 'Platforma haqida batafsil va ko\'rsatmalar', icon: Home },
-    { id: 'all', label: 'Universitetlar Katalogi', desc: 'Real ma\'lumotlar va grant kvotalari', icon: GraduationCap },
-    { id: 'courses', label: 'IELTS & SAT Kurslari', desc: 'Akademik tayyorgarlik maktabi', icon: BookOpen },
-    { id: 'ai', label: '30 ta Daxshatli AI Funksiya', desc: 'Chet elga tayyorlov AI markazi', icon: Sparkles, badge: 'PRO' },
-    { id: 'uz', label: '100% Grant Kalkulyatori', desc: 'Siz uchun unikal 20+ yechim', icon: Layers },
-    { id: 'apply', label: 'Universitetlarga Topshirish', desc: 'Ariza topshirish va vizalar', icon: Compass }
+    { id: 'home', label: translations[currentLang].home, desc: currentLang === 'uz' ? 'Platforma haqida batafsil va ko\'rsatmalar' : currentLang === 'ru' ? 'Подробно о платформе и инструкции' : 'Detailed platform intro & instructions', icon: Home },
+    { id: 'all', label: translations[currentLang].catalog, desc: currentLang === 'uz' ? 'Real ma\'lumotlar va grant kvotalari' : currentLang === 'ru' ? 'Реальные данные и квоты грантов' : 'Real database and grant quotas', icon: GraduationCap },
+    { id: 'courses', label: translations[currentLang].courses, desc: currentLang === 'uz' ? 'Akademik tayyorgarlik maktabi' : currentLang === 'ru' ? 'Школа академической подготовки' : 'Academic test prep school', icon: BookOpen },
+    { id: 'ai', label: translations[currentLang].aiHub, desc: currentLang === 'uz' ? 'Chet elga tayyorlov AI markazi' : currentLang === 'ru' ? 'ИИ-центр подготовки за рубеж' : 'Study abroad test AI hub', icon: Sparkles, badge: 'PRO' },
+    { id: 'uz', label: translations[currentLang].grantCalc, desc: currentLang === 'uz' ? 'Siz uchun unikal 20+ yechim' : currentLang === 'ru' ? '20+ уникальных решений для вас' : '20+ custom calculators for you', icon: Layers },
+    { id: 'apply', label: translations[currentLang].apply, desc: currentLang === 'uz' ? 'Ariza topshirish va vizalar' : currentLang === 'ru' ? 'Подача заявок и получение визы' : 'Direct execution & visa guides', icon: Compass }
   ];
 
   return (
@@ -131,64 +144,88 @@ export default function App() {
               <Menu className="h-5.5 w-5.5 text-sky-600" />
             </button>
 
-            <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setActiveTab('home')}
+              className="flex items-center gap-2 text-left bg-transparent border-0 outline-none p-0 cursor-pointer active:scale-98 transition-transform"
+            >
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-400 to-blue-500 shadow-lg p-1.5 border border-sky-200">
                 <GraduationCap className="h-5 w-5 text-white" />
               </div>
               <div>
-                <span className="text-base font-black tracking-wider bg-gradient-to-r from-slate-900 to-sky-950 bg-clip-text text-transparent">
+                <span className="text-base font-black tracking-wider bg-gradient-to-r from-slate-900 to-sky-950 bg-clip-text text-transparent block">
                   TopGrand Central v3.0
                 </span>
-                <p className="text-[9px] font-mono tracking-widest text-sky-600 font-bold uppercase">AI Ecosystem</p>
+                <p className="text-[9px] font-mono tracking-widest text-sky-600 font-bold uppercase block -mt-0.5">AI Ecosystem</p>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Center menu removed completely as requested to keep layout ultra-clean and iPhone 16/17 optimized */}
 
-          {/* Right side status options (Telegram link + auth button) */}
+          {/* Right side status options */}
           <div className="flex items-center gap-3">
-            {/* Telegram Channel Link with beautiful ping animation */}
-            <a
-              href="https://t.me/TopGrands"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative flex items-center gap-1.5 bg-[#0088cc]/10 border border-[#0088cc]/25 hover:border-[#0088cc]/50 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0088cc] shadow-sm active:scale-95 transition"
-              id="header-tg-link"
-            >
-              <Send className="h-3.5 w-3.5 text-[#0088cc] fill-[#0088cc]" />
-              <span className="hidden md:inline">@TopGrands Rasmiy</span>
-              <span className="inline md:hidden">@TopGrands</span>
-              <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-              </span>
-            </a>
-
-            {/* Login or User status info */}
-            {user.isLoggedIn ? (
-              <div className="flex items-center gap-2 rounded-xl bg-sky-50 border border-sky-100 px-3 py-1.5" id="user-top-info">
-                <span className="text-[10px] text-sky-800 font-bold max-w-[85px] truncate hidden sm:inline-block">
-                  {user.name}
-                </span>
+            {/* Pill Language Selector always visible for accessibility */}
+            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-0.5 border border-slate-200">
+              {(['uz', 'en', 'ru'] as const).map((lang) => (
                 <button
-                  onClick={handleLogout}
-                  className="p-1 hover:text-red-500 text-slate-500 transition cursor-pointer"
-                  title="Chiqish"
-                  id="btn-logout-top"
+                  key={lang}
+                  onClick={() => handleSetLang(lang)}
+                  className={`px-2.5 py-1 text-[10px] font-black rounded-lg transition ${
+                    currentLang === lang
+                      ? 'bg-white text-sky-600 shadow-sm font-black'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
                 >
-                  <LogOut className="h-4 w-4" />
+                  {lang.toUpperCase()}
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => handleOpenAuth('login')}
-                className="flex items-center gap-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 border border-sky-500/30 px-3.5 py-1.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer"
-                id="btn-login-top"
+              ))}
+            </div>
+
+            {/* Telegram Channel Link with beautiful ping animation */}
+            {activeTab === 'home' && (
+              <a
+                href="https://t.me/TopGrands"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative flex items-center gap-1.5 bg-[#0088cc]/10 border border-[#0088cc]/25 hover:border-[#0088cc]/50 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0088cc] shadow-sm active:scale-95 transition hover:brightness-110"
+                id="header-tg-link"
               >
-                <LogIn className="h-3.5 w-3.5 text-white" />
-                <span>Kirish</span>
-              </button>
+                <Send className="h-3.5 w-3.5 text-[#0088cc] fill-[#0088cc]" />
+                <span className="hidden md:inline">@TopGrands Rasmiy</span>
+                <span className="inline md:hidden">@TopGrands</span>
+                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                </span>
+              </a>
+            )}
+
+            {/* Login or User status info ONLY on Home Screen to exclude on child functions */}
+            {activeTab === 'home' && (
+              user.isLoggedIn ? (
+                <div className="flex items-center gap-2 rounded-xl bg-sky-50 border border-sky-100 px-3 py-1.5" id="user-top-info">
+                  <span className="text-[10px] text-sky-800 font-bold max-w-[85px] truncate hidden sm:inline-block">
+                    {user.name}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="p-1 hover:text-red-500 text-slate-500 transition cursor-pointer"
+                    title={translations[currentLang].logout}
+                    id="btn-logout-top"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleOpenAuth('login')}
+                  className="flex items-center gap-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 border border-sky-500/30 px-3.5 py-1.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer"
+                  id="btn-login-top"
+                >
+                  <LogIn className="h-3.5 w-3.5 text-white" />
+                  <span>{translations[currentLang].login}</span>
+                </button>
+              )
             )}
           </div>
         </header>
@@ -362,6 +399,7 @@ export default function App() {
               {activeTab === 'home' && (
                 <HomeSection 
                   user={user}
+                  currentLang={currentLang}
                   onOpenAuth={() => handleOpenAuth('login')}
                   onOpenPremium={handleOpenPremium}
                   setActiveTab={setActiveTab}

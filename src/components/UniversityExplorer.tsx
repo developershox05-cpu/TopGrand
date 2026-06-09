@@ -3,6 +3,7 @@ import { Search, MapPin, Award, Calendar, DollarSign, Globe, Lock, Unlock, FileT
 import { University, User } from '../types';
 import { universitiesData } from '../data';
 import { motion, AnimatePresence } from 'motion/react';
+import { getApiUrl } from '../lib/api';
 
 interface UniversityExplorerProps {
   user: User;
@@ -104,7 +105,7 @@ export default function UniversityExplorer({ user, onOpenPremium, onToggleFullSc
     setUniChatLoading(true);
 
     try {
-      const response = await fetch("/api/ai/generate", {
+      const response = await fetch(getApiUrl("/api/ai/generate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

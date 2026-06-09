@@ -5,15 +5,18 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { User } from '../types';
+import PrepProgress from './PrepProgress';
+import TestimonialsCarousel from './TestimonialsCarousel';
 
 interface HomeSectionProps {
   user: User;
+  currentLang: 'uz' | 'en' | 'ru';
   onOpenAuth: () => void;
   onOpenPremium: () => void;
   setActiveTab: (tab: string) => void;
 }
 
-export default function HomeSection({ user, onOpenAuth, onOpenPremium, setActiveTab }: HomeSectionProps) {
+export default function HomeSection({ user, currentLang, onOpenAuth, onOpenPremium, setActiveTab }: HomeSectionProps) {
   const [selectedSpec, setSelectedSpec] = useState<string>('us');
 
   const stats = [
@@ -159,6 +162,15 @@ export default function HomeSection({ user, onOpenAuth, onOpenPremium, setActive
             ))}
           </div>
         </div>
+      </div>
+
+      {/* BENTO SECTION: SUCCESS STORIES AND PREPARATION PROGRESS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch" id="premium-bento-success-prep">
+        {/* Left Bento item: Circular Prep Tracker */}
+        <PrepProgress currentLang={currentLang} userEmail={user.email} userId={user.id} />
+
+        {/* Right Bento item: Success Stories Carousel */}
+        <TestimonialsCarousel currentLang={currentLang} />
       </div>
 
       {/* SECTION 4: NIMALAR BOR / TIZIM MODULLARI - INTERACTIVE HUB */}

@@ -13,6 +13,17 @@ const PORT = 3000;
 // Parse request bodies as JSON
 app.use(express.json());
 
+// Enable CORS so that static deployments like topgrand.pages.dev can call this API
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Initialize Gemini Client safely with the provided API key as the absolute fallback
 const apiKey = process.env.GEMINI_API_KEY || "AQ.Ab8RN6LjOGyyaOBcZV6lElOUZg6D-qb2bdKML6J3SPYMONbiSw";
 let aiClient: GoogleGenAI | null = null;
@@ -134,6 +145,28 @@ app.post("/api/ai/generate", async (req, res) => {
 
   // Define tailored instructions for all 30 tools to feed into Gemini
   switch (toolType) {
+    case "university_chat":
+      systemInstruction = `Siz ${inputData?.uniName || "tanlangan"} universitetining nufuzli rasmiy qabul vakili va TopGrand AI rasmiy konsultantisiz. 
+Siz ulanayotgan universitet haqida to'liq real ma'lumotga egasiz:
+Tavsif: ${inputData?.uniDescription || "Noma'lum"}
+Mamlakat: ${inputData?.uniCountry || "Noma'lum"}
+Shahar: ${inputData?.uniCity || "Noma'lum"}
+Yillik Kontrakt: ${inputData?.uniFee || "Noma'lum"}
+Muddatlar (Deadlines): ${inputData?.uniDeadlines || "Noma'lum"}
+Kerakli Hujjatlar: ${JSON.stringify(inputData?.uniDocuments || [])}
+Rasmiy sayt: ${inputData?.uniWebsite || "Noma'lum"}
+
+Talabaning savollariga xuddi shu universitet rasmiy bo'lim rahbari sifatida eng to'g'ri, mukammal va real javobni bering. 
+MULOQOT QOIDASI: 
+1. Doimo chiroyli o'zbek tilida, do'stona va ishonchli akademik ohangda yozing. 
+2. Agar talaba ruscha yoki inglizcha yozsa, o'sha tilda davom ettiring.
+3. Hech qachon xayoliy/soxta ma'lumot bermang, faqat taqdim etilgan universitet ma'lumotlariga va grant imkoniyatlariga tayanib javob bering.`;
+      
+      const historyArr = inputData?.history || [];
+      const historyStr = historyArr.map((h: any) => `${h.sender === "user" ? "Talaba" : "AI Vakil"}: ${h.text}`).join("\n");
+      prompt = `Suhbat tarixi:\n${historyStr}\n\nNavbatdagi Savol: ${inputData?.userMessage || "Assalomu alaykum"}\n\nIltimos, ushbu savolga juda qulay, aniq, silliq va daxshatli aniqlikda javob qaytaring.`;
+      break;
+
     // CATEGORY 1: "THE STRATEGIST" (Akademik Razvedka)
     case "university_vibe_matcher":
       systemInstruction = "Siz 'University Vibe Matcher' mutaxassisiz. Talabaning xarakteri va qiziqishlarini tahlil qilib, unga mos kelishi mumkin bo'lgan universitetlarning haqiqiy muhitini (konservativ, liberal, party-oriented, research-heavy) va qadriyatlarini aytib bering.";
