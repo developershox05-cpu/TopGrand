@@ -30,12 +30,18 @@ export default function App() {
 
   const [authModal, setAuthModal] = useState({ isOpen: false, mode: 'login' as 'login' | 'register' });
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
 
   // Local storage session retrieval
   useEffect(() => {
-    const stored = localStorage.getItem('current_user');
-    if (stored) {
-      setUser(JSON.parse(stored));
+    try {
+      const stored = localStorage.getItem('current_user');
+      if (stored) {
+        setUser(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.warn("Mangled session storage, clearing state:", e);
+      localStorage.removeItem('current_user');
     }
   }, []);
 
@@ -111,80 +117,82 @@ export default function App() {
       </div>
 
       {/* GLOBAL TRANSLUCENT TOP HEADER (With Menu Icon On Left) */}
-      <header className="sticky top-0 z-40 w-full border-b border-sky-100 bg-white/85 backdrop-blur-md px-4 md:px-8 py-3.5 flex items-center justify-between shadow-sm">
-        
-        {/* Left hamburger + branded title */}
-        <div className="flex items-center gap-3.5">
-          <button 
-            onClick={() => setMenuOpen(true)}
-            className="p-2 mr-1 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 focus:outline-none focus:ring-1 focus:ring-sky-200 active:scale-95 transition cursor-pointer"
-            title="Kanal va Bo'limlar Menyusi"
-            id="btn-global-hamburger"
-          >
-            <Menu className="h-5.5 w-5.5 text-sky-600" />
-          </button>
+      {!isFullScreenOpen && (
+        <header className="sticky top-0 z-40 w-full border-b border-sky-100 bg-white/85 backdrop-blur-md px-4 md:px-8 py-3.5 flex items-center justify-between shadow-sm">
+          
+          {/* Left hamburger + branded title */}
+          <div className="flex items-center gap-3.5">
+            <button 
+              onClick={() => setMenuOpen(true)}
+              className="p-2 mr-1 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 focus:outline-none focus:ring-1 focus:ring-sky-200 active:scale-95 transition cursor-pointer"
+              title="Kanal va Bo'limlar Menyusi"
+              id="btn-global-hamburger"
+            >
+              <Menu className="h-5.5 w-5.5 text-sky-600" />
+            </button>
 
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-400 to-blue-500 shadow-lg p-1.5 border border-sky-200">
-              <GraduationCap className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <span className="text-base font-black tracking-wider bg-gradient-to-r from-slate-900 to-sky-950 bg-clip-text text-transparent">
-                TopGrand Central v3.0
-              </span>
-              <p className="text-[9px] font-mono tracking-widest text-sky-600 font-bold uppercase">AI Ecosystem</p>
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-400 to-blue-500 shadow-lg p-1.5 border border-sky-200">
+                <GraduationCap className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <span className="text-base font-black tracking-wider bg-gradient-to-r from-slate-900 to-sky-950 bg-clip-text text-transparent">
+                  TopGrand Central v3.0
+                </span>
+                <p className="text-[9px] font-mono tracking-widest text-sky-600 font-bold uppercase">AI Ecosystem</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Center menu removed completely as requested to keep layout ultra-clean and iPhone 16/17 optimized */}
+          {/* Center menu removed completely as requested to keep layout ultra-clean and iPhone 16/17 optimized */}
 
-        {/* Right side status options (Telegram link + auth button) */}
-        <div className="flex items-center gap-3">
-          {/* Telegram Channel Link with beautiful ping animation */}
-          <a
-            href="https://t.me/TopGrands"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative flex items-center gap-1.5 bg-[#0088cc]/10 border border-[#0088cc]/25 hover:border-[#0088cc]/50 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0088cc] shadow-sm active:scale-95 transition"
-            id="header-tg-link"
-          >
-            <Send className="h-3.5 w-3.5 text-[#0088cc] fill-[#0088cc]" />
-            <span className="hidden md:inline">@TopGrands Rasmiy</span>
-            <span className="inline md:hidden">@TopGrands</span>
-            <span className="absolute -top-1 -right-1 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-            </span>
-          </a>
-
-          {/* Login or User status info */}
-          {user.isLoggedIn ? (
-            <div className="flex items-center gap-2 rounded-xl bg-sky-50 border border-sky-100 px-3 py-1.5" id="user-top-info">
-              <span className="text-[10px] text-sky-800 font-bold max-w-[85px] truncate hidden sm:inline-block">
-                {user.name}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="p-1 hover:text-red-500 text-slate-500 transition cursor-pointer"
-                title="Chiqish"
-                id="btn-logout-top"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => handleOpenAuth('login')}
-              className="flex items-center gap-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 border border-sky-500/30 px-3.5 py-1.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer"
-              id="btn-login-top"
+          {/* Right side status options (Telegram link + auth button) */}
+          <div className="flex items-center gap-3">
+            {/* Telegram Channel Link with beautiful ping animation */}
+            <a
+              href="https://t.me/TopGrands"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative flex items-center gap-1.5 bg-[#0088cc]/10 border border-[#0088cc]/25 hover:border-[#0088cc]/50 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0088cc] shadow-sm active:scale-95 transition"
+              id="header-tg-link"
             >
-              <LogIn className="h-3.5 w-3.5 text-white" />
-              <span>Kirish</span>
-            </button>
-          )}
-        </div>
-      </header>
+              <Send className="h-3.5 w-3.5 text-[#0088cc] fill-[#0088cc]" />
+              <span className="hidden md:inline">@TopGrands Rasmiy</span>
+              <span className="inline md:hidden">@TopGrands</span>
+              <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+              </span>
+            </a>
+
+            {/* Login or User status info */}
+            {user.isLoggedIn ? (
+              <div className="flex items-center gap-2 rounded-xl bg-sky-50 border border-sky-100 px-3 py-1.5" id="user-top-info">
+                <span className="text-[10px] text-sky-800 font-bold max-w-[85px] truncate hidden sm:inline-block">
+                  {user.name}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="p-1 hover:text-red-500 text-slate-500 transition cursor-pointer"
+                  title="Chiqish"
+                  id="btn-logout-top"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => handleOpenAuth('login')}
+                className="flex items-center gap-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 border border-sky-500/30 px-3.5 py-1.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer"
+                id="btn-login-top"
+              >
+                <LogIn className="h-3.5 w-3.5 text-white" />
+                <span>Kirish</span>
+              </button>
+            )}
+          </div>
+        </header>
+      )}
 
       {/* BOTTOM PHONE-OPTIMIZED SLIDING SHEET DRAWER MENU */}
       <AnimatePresence>
@@ -253,6 +261,7 @@ export default function App() {
                         onClick={() => {
                           setActiveTab(item.id);
                           setMenuOpen(false);
+                          setIsFullScreenOpen(false);
                         }}
                         className={`w-full text-left p-3 rounded-2xl transition border flex items-center gap-3.5 cursor-pointer group ${
                           activeTab === item.id
@@ -340,20 +349,6 @@ export default function App() {
           />
         )}
 
-        {/* ELEGANT BACK BUTTON TO RETURN TO HOME SCREEN FROM SUB-SECTIONS */}
-        {activeTab !== 'home' && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 mt-6" id="back-to-home-bar">
-            <button
-              onClick={() => setActiveTab('home')}
-              className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl border border-sky-200 bg-white hover:bg-sky-50 text-sky-950 font-black text-xs transition duration-150 shadow-md active:scale-95 cursor-pointer"
-              id="btn-global-back-home"
-            >
-              <ArrowLeft className="h-4.5 w-4.5 text-sky-600" />
-              <span>Orqaga Qaytish (Bosh Sahifa 🏠)</span>
-            </button>
-          </div>
-        )}
-
         {/* ACTIVE TAB VIEWS SEGMENTATION */}
         <div className="mt-4">
           <AnimatePresence mode="wait">
@@ -377,6 +372,7 @@ export default function App() {
                 <UniversityExplorer 
                   user={user} 
                   onOpenPremium={handleOpenPremium} 
+                  onToggleFullScreen={setIsFullScreenOpen}
                 />
               )}
 
@@ -390,6 +386,7 @@ export default function App() {
                   onOpenAuth={() => handleOpenAuth('register')} 
                   onOpenPremium={handleOpenPremium}
                   onUpdateUsage={handleUpdateUsage}
+                  onToggleFullScreen={setIsFullScreenOpen}
                 />
               )}
 

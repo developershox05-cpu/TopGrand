@@ -14,6 +14,7 @@ interface AIPrepCenterProps {
   onOpenAuth: () => void;
   onOpenPremium: () => void;
   onUpdateUsage: (toolKey: string) => void;
+  onToggleFullScreen?: (isOpen: boolean) => void;
 }
 
 interface ToolConfig {
@@ -35,8 +36,16 @@ interface FormField {
   options?: string[];
 }
 
-export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdateUsage }: AIPrepCenterProps) {
+export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdateUsage, onToggleFullScreen }: AIPrepCenterProps) {
   const [selectedTool, setSelectedTool] = useState<ToolConfig | null>(null);
+
+  useEffect(() => {
+    onToggleFullScreen?.(!!selectedTool);
+    return () => {
+      onToggleFullScreen?.(false);
+    };
+  }, [selectedTool, onToggleFullScreen]);
+
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
   const [usageTrigger, setUsageTrigger] = useState(0); 
@@ -793,14 +802,14 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="w-full max-w-6xl mx-auto rounded-[2.5rem] border border-blue-950/20 bg-[#0a0f26] p-6 md:p-8 shadow-2xl relative"
+            className="fixed inset-0 z-50 bg-[#070b1e] text-slate-100 flex flex-col h-screen w-screen overflow-hidden"
             id="detailed-workspace"
           >
             {/* Elegant high-contrast top back button bar */}
-            <div className="flex items-center justify-between pb-6 border-b border-white/10 mb-8" id="workspace-back-header">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-slate-900/95 shrink-0 z-30 shadow-md" id="workspace-back-header">
               <button
                 onClick={() => setSelectedTool(null)}
-                className="flex items-center gap-2.5 px-5 py-3 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-extrabold text-xs transition cursor-pointer"
+                className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/10 font-extrabold text-xs transition cursor-pointer"
                 id="btn-back-to-catalog"
               >
                 <ArrowLeft className="h-4.5 w-4.5 text-cyan-400 stroke-[2.5px]" />
@@ -808,15 +817,15 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
               </button>
 
               <div className="flex items-center gap-3">
-                <span className="text-[11px] font-black tracking-widest text-cyan-400 font-mono uppercase bg-cyan-450/10 border border-cyan-400/20 px-3.5 py-1 rounded-full">
+                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-cyan-500/10 border border-cyan-400/20 px-3.5 py-1 text-xs font-black text-cyan-300">
                   {selectedTool.title}
                 </span>
                 {user.isPremium ? (
-                  <span className="inline-flex items-center gap-1 bg-yellow-400/25 text-yellow-300 border border-yellow-400/20 px-3 py-1 rounded-full text-[9px] font-black uppercase">
-                    <Gem className="h-3 w-3 text-yellow-400 shrink-0" /> PRO Obuna
+                  <span className="inline-flex items-center gap-1 bg-yellow-400/25 text-yellow-300 border border-yellow-400/20 px-3 py-1 rounded-full text-xs font-black uppercase">
+                    <Gem className="h-3.5 w-3.5 text-yellow-400 shrink-0" /> PRO Obuna
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 bg-white/5 border border-white/10 text-cyan-200 px-3 py-1 rounded-full text-[9px] font-extrabold uppercase font-mono">
+                  <span className="inline-flex items-center gap-1 bg-white/5 border border-white/10 text-cyan-200 px-3 py-1 rounded-full text-xs font-extrabold uppercase font-mono">
                     LIMIT: {limits[selectedTool.key]?.remaining ?? 3} / 3 REJA
                   </span>
                 )}
@@ -824,14 +833,14 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
             </div>
 
             {/* Split workspace layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch text-white">
+            <div className="flex-1 overflow-y-auto lg:overflow-hidden p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch text-white">
               
               {/* Left Side: Inputs list & execution instructions */}
-              <div className="lg:col-span-12 xl:col-span-5 flex flex-col justify-between text-left">
+              <div className="lg:col-span-12 xl:col-span-5 flex flex-col justify-between text-left lg:overflow-y-auto lg:max-h-full pr-2 space-y-6">
                 <div>
                   <div className="flex items-center gap-4 mb-6">
                     <div className={`p-4 rounded-2xl bg-gradient-to-tr ${selectedTool.color} text-white shadow-xl`}>
-                      {React.createElement(selectedTool.icon, { className: 'h-6.5 w-6.5 strike-[2.5px]' })}
+                      {React.createElement(selectedTool.icon, { className: 'h-6.5 w-6.5 stroke-[2.5px]' })}
                     </div>
                     <div>
                       <h3 className="text-lg md:text-xl font-extrabold text-white leading-tight">{selectedTool.title}</h3>
@@ -855,7 +864,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                               rows={5}
                               value={formValues[field.id] || ''}
                               onChange={(e) => setFormValues({ ...formValues, [field.id]: e.target.value })}
-                              className="w-full rounded-2xl border border-slate-700 bg-slate-900/80 py-3.5 px-4 text-xs font-semibold text-white placeholder-slate-500 outline-none focus:border-cyan-400 focus:bg-slate-900 transition-colors"
+                              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 px-4 text-xs font-extrabold text-[#090d23] placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors shadow-sm"
                               placeholder={field.placeholder}
                             ></textarea>
                           ) : (
@@ -863,7 +872,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                               type="text"
                               value={formValues[field.id] || ''}
                               onChange={(e) => setFormValues({ ...formValues, [field.id]: e.target.value })}
-                              className="w-full rounded-2xl border border-slate-700 bg-slate-900/80 py-3.5 px-4 text-xs font-semibold text-white placeholder-slate-500 outline-none focus:border-cyan-400 focus:bg-slate-900 transition-colors"
+                              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 px-4 text-xs font-extrabold text-[#090d23] placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors shadow-sm"
                               placeholder={field.placeholder}
                             />
                           )}
@@ -875,7 +884,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                         disabled={loading}
                         className={`w-full py-4 rounded-2xl font-black text-xs text-white uppercase tracking-widest shadow-xl transition-all duration-200 cursor-pointer ${
                           loading 
-                            ? 'bg-slate-800 border border-white/5 shadow-none cursor-not-allowed opacity-[0.8]' 
+                            ? 'bg-slate-850 border border-white/5 shadow-none cursor-not-allowed opacity-[0.8]' 
                             : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110 active:scale-[0.98]'
                         }`}
                         id="btn-execute-static"
@@ -907,11 +916,12 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
 
                       {/* Restart tool button */}
                       <button
+                        type="button"
                         onClick={() => {
                           setChatHistory([]);
                           setResult('');
                         }}
-                        className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-extrabold text-xs transition cursor-pointer text-center"
+                        className="w-full py-3 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-extrabold text-xs transition cursor-pointer text-center active:scale-[0.98]"
                       >
                         Ma'lumotlarni tozalash va yangidan boshlash
                       </button>
@@ -925,8 +935,8 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
               </div>
 
               {/* Right Side: Log Console with extremely readable pure white lettering */}
-              <div className="lg:col-span-12 xl:col-span-7 flex flex-col justify-between">
-                <div className="flex-1 flex flex-col rounded-3xl border border-white/15 bg-slate-900/60 p-5 md:p-7 min-h-[440px] max-h-[600px] overflow-hidden text-white shadow-inner justify-between">
+              <div className="lg:col-span-12 xl:col-span-7 flex flex-col h-[500px] lg:h-full justify-between">
+                <div className="flex-1 flex flex-col rounded-3xl border border-white/15 bg-slate-900/60 p-5 md:p-7 overflow-hidden text-white shadow-inner justify-between h-full">
                   
                   {/* Title Console log */}
                   <div className="flex justify-between items-center pb-3 border-b border-white/5 mb-4 shrink-0 font-mono text-[9px] text-cyan-400 font-extrabold tracking-widest uppercase">
@@ -991,7 +1001,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                         value={chatMessage}
                         disabled={loading}
                         onChange={(e) => setChatMessage(e.target.value)}
-                        className="flex-1 rounded-2xl bg-slate-950 border border-slate-800 py-3.5 px-4 text-xs font-semibold text-white placeholder-slate-500 outline-none focus:border-cyan-400 focus:bg-slate-900 transition-all font-semibold"
+                        className="flex-1 rounded-2xl bg-white border border-slate-300 py-3.5 px-4 text-xs font-extrabold text-slate-950 placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
                         placeholder="AI maslahatchiga savol bering yoki javob yozing..."
                       />
                       <button

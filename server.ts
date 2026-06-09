@@ -365,12 +365,14 @@ Siz kiritgan ma'lumotlar real vaqt rejimida qayta ishlandi va professional tavsi
     });
 
     const aiText = response.text || "";
+    if (!aiText) {
+      throw new Error("Bo'sh javob qaytdi.");
+    }
     res.json({ text: aiText, sources: [] });
 
   } catch (error: any) {
-    console.error("Gemini API Error, falling back to high-fidelity Uzbek simulation:", error.message || error);
-    const text = generateSimulatedResponse(toolType, userPremium);
-    res.json({ text, sources: [] });
+    console.error("Gemini API Error:", error.message || error);
+    res.status(500).json({ error: "Sun'iy intellekt tizimida ulanish xatoligi yuz berdi. Iltimos keyinroq qaytadan urinib ko'ring." });
   }
 });
 

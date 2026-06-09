@@ -7,12 +7,20 @@ import { motion, AnimatePresence } from 'motion/react';
 interface UniversityExplorerProps {
   user: User;
   onOpenPremium: () => void;
+  onToggleFullScreen?: (isOpen: boolean) => void;
 }
 
-export default function UniversityExplorer({ user, onOpenPremium }: UniversityExplorerProps) {
+export default function UniversityExplorer({ user, onOpenPremium, onToggleFullScreen }: UniversityExplorerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('barchasi');
   const [selectedUni, setSelectedUni] = useState<University | null>(null);
+
+  React.useEffect(() => {
+    onToggleFullScreen?.(!!selectedUni);
+    return () => {
+      onToggleFullScreen?.(false);
+    };
+  }, [selectedUni, onToggleFullScreen]);
   const [activeSubTab, setActiveSubTab] = useState<'katalog' | 'qaynoq' | 'favorite'>('katalog');
   const [showPartnerModal, setShowPartnerModal] = useState(false);
 
@@ -803,7 +811,7 @@ export default function UniversityExplorer({ user, onOpenPremium }: UniversityEx
                           value={uniChatInput}
                           onChange={(e) => setUniChatInput(e.target.value)}
                           placeholder={`${selectedUni.name} haqida savol bering (Masalan: SAT ballisiz qabul bormi?) ...`}
-                          className="flex-grow bg-slate-50 text-slate-900 placeholder-slate-400 border border-slate-200 rounded-2xl px-4 py-3.5 text-xs md:text-sm outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm font-semibold"
+                          className="flex-grow bg-white text-slate-950 placeholder-slate-400 border border-slate-300 rounded-2xl px-4 py-3.5 text-xs md:text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm font-extrabold"
                         />
                         <button
                           type="submit"
