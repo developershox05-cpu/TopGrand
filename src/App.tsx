@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, Trophy, Shield, HelpCircle, Lock, Gem, LogIn, ExternalLink, 
-  Send, ArrowRight, Play, Heart, Star, CheckCircle, Menu, X, GraduationCap, 
-  Compass, Award, BookOpen, Layers, MessageSquare, Briefcase, ChevronRight, LogOut, PhoneCall
+  Send, ArrowRight, ArrowLeft, Play, Heart, Star, CheckCircle, Menu, X, GraduationCap, 
+  Compass, Award, BookOpen, Layers, MessageSquare, Briefcase, ChevronRight, LogOut, PhoneCall, Home
 } from 'lucide-react';
 import { User } from './types';
 import Hero from './components/Hero';
@@ -12,10 +12,11 @@ import CoursePrepSection from './components/CoursePrepSection';
 import ApplyUniversitySection from './components/ApplyUniversitySection';
 import AIPrepCenter from './components/AIPrepCenter';
 import AuthModal from './components/AuthModal';
+import HomeSection from './components/HomeSection';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('all'); // all, courses, ai, uz, apply
+  const [activeTab, setActiveTab] = useState('home'); // home, all, courses, ai, uz, apply
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<User>({
     id: '',
@@ -92,6 +93,7 @@ export default function App() {
   };
 
   const navigationItems = [
+    { id: 'home', label: 'Bosh Sahifa', desc: 'Platforma haqida batafsil va ko\'rsatmalar', icon: Home },
     { id: 'all', label: 'Universitetlar Katalogi', desc: 'Real ma\'lumotlar va grant kvotalari', icon: GraduationCap },
     { id: 'courses', label: 'IELTS & SAT Kurslari', desc: 'Akademik tayyorgarlik maktabi', icon: BookOpen },
     { id: 'ai', label: '30 ta Daxshatli AI Funksiya', desc: 'Chet elga tayyorlov AI markazi', icon: Sparkles, badge: 'PRO' },
@@ -100,57 +102,42 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#030510] text-[#f8fafc] font-sans flex flex-col justify-between selection:bg-cyan-500/30 selection:text-white overflow-x-hidden relative" id="main-root">
+    <div className="min-h-screen bg-[#f0f9ff] text-slate-900 font-sans flex flex-col justify-between selection:bg-sky-500/20 selection:text-slate-900 overflow-x-hidden relative" id="main-root">
       
       {/* Dynamic Ambient Cyberlight Effects (Cyan & Blue Glow) */}
       <div className="absolute top-0 left-0 w-full h-[600px] overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-[150px] left-[15%] w-[400px] h-[400px] rounded-full bg-blue-600/15 blur-[120px] animate-pulse"></div>
-        <div className="absolute -top-[200px] right-[10%] w-[500px] h-[500px] rounded-full bg-cyan-505/10 blur-[130px]" style={{ backgroundColor: 'rgba(6, 182, 212, 0.08)' }}></div>
+        <div className="absolute -top-[150px] left-[15%] w-[400px] h-[400px] rounded-full bg-blue-300/10 blur-[120px] animate-pulse"></div>
+        <div className="absolute -top-[200px] right-[10%] w-[500px] h-[500px] rounded-full bg-cyan-300/10 blur-[130px]"></div>
       </div>
 
       {/* GLOBAL TRANSLUCENT TOP HEADER (With Menu Icon On Left) */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#030510]/80 backdrop-blur-md px-4 md:px-8 py-3.5 flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-full border-b border-sky-100 bg-white/85 backdrop-blur-md px-4 md:px-8 py-3.5 flex items-center justify-between shadow-sm">
         
         {/* Left hamburger + branded title */}
         <div className="flex items-center gap-3.5">
           <button 
             onClick={() => setMenuOpen(true)}
-            className="p-2 mr-1 rounded-xl bg-white/5 hover:bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/20 active:scale-95 transition cursor-pointer"
+            className="p-2 mr-1 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 focus:outline-none focus:ring-1 focus:ring-sky-200 active:scale-95 transition cursor-pointer"
             title="Kanal va Bo'limlar Menyusi"
             id="btn-global-hamburger"
           >
-            <Menu className="h-5.5 w-5.5 text-cyan-300" />
+            <Menu className="h-5.5 w-5.5 text-sky-600" />
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-500 shadow-lg p-1.5 border border-white/10">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-400 to-blue-500 shadow-lg p-1.5 border border-sky-200">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <div>
-              <span className="text-base font-black tracking-wider bg-gradient-to-r from-white via-cyan-100 to-cyan-300 bg-clip-text text-transparent">
+              <span className="text-base font-black tracking-wider bg-gradient-to-r from-slate-900 to-sky-950 bg-clip-text text-transparent">
                 TopGrand Central v3.0
               </span>
-              <p className="text-[9px] font-mono tracking-widest text-cyan-400/80 uppercase">AI Ecosystem</p>
+              <p className="text-[9px] font-mono tracking-widest text-sky-600 font-bold uppercase">AI Ecosystem</p>
             </div>
           </div>
         </div>
 
-        {/* Center: Quick navigation links (Desktop only) */}
-        <div className="hidden lg:flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 backdrop-blur-md">
-          {navigationItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition ${
-                activeTab === item.id
-                  ? 'bg-[#00d2ff]/20 text-white border border-[#00d2ff]/30 shadow-lg'
-                  : 'text-blue-200 hover:text-white hover:bg-white/5 border border-transparent'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+        {/* Center menu removed completely as requested to keep layout ultra-clean and iPhone 16/17 optimized */}
 
         {/* Right side status options (Telegram link + auth button) */}
         <div className="flex items-center gap-3">
@@ -159,7 +146,7 @@ export default function App() {
             href="https://t.me/TopGrands"
             target="_blank"
             rel="noopener noreferrer"
-            className="relative flex items-center gap-1.5 bg-[#0088cc]/15 border border-[#0088cc]/30 hover:border-[#0088cc]/60 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-md active:scale-95 transition"
+            className="relative flex items-center gap-1.5 bg-[#0088cc]/10 border border-[#0088cc]/25 hover:border-[#0088cc]/50 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0088cc] shadow-sm active:scale-95 transition"
             id="header-tg-link"
           >
             <Send className="h-3.5 w-3.5 text-[#0088cc] fill-[#0088cc]" />
@@ -173,13 +160,13 @@ export default function App() {
 
           {/* Login or User status info */}
           {user.isLoggedIn ? (
-            <div className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-3 py-1.5" id="user-top-info">
-              <span className="text-[10px] text-cyan-300 font-bold max-w-[85px] truncate hidden sm:inline-block">
+            <div className="flex items-center gap-2 rounded-xl bg-sky-50 border border-sky-100 px-3 py-1.5" id="user-top-info">
+              <span className="text-[10px] text-sky-800 font-bold max-w-[85px] truncate hidden sm:inline-block">
                 {user.name}
               </span>
               <button
                 onClick={handleLogout}
-                className="p-1 hover:text-red-400 text-blue-300 transition cursor-pointer"
+                className="p-1 hover:text-red-500 text-slate-500 transition cursor-pointer"
                 title="Chiqish"
                 id="btn-logout-top"
               >
@@ -189,69 +176,72 @@ export default function App() {
           ) : (
             <button
               onClick={() => handleOpenAuth('login')}
-              className="flex items-center gap-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 px-3.5 py-1.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 border border-sky-500/30 px-3.5 py-1.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer"
               id="btn-login-top"
             >
-              <LogIn className="h-3.5 w-3.5 text-cyan-400" />
+              <LogIn className="h-3.5 w-3.5 text-white" />
               <span>Kirish</span>
             </button>
           )}
         </div>
       </header>
 
-      {/* LEFT NAVIGATION SLIDING DRAWER MENU */}
+      {/* BOTTOM PHONE-OPTIMIZED SLIDING SHEET DRAWER MENU */}
       <AnimatePresence>
         {menuOpen && (
-          <div className="fixed inset-0 z-50 flex">
-            {/* Backdrop black overlay */}
+          <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:justify-start">
+            {/* Backdrop translucent overlay */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.7 }}
+              animate={{ opacity: 0.6 }}
               exit={{ opacity: 0 }}
               onClick={() => setMenuOpen(false)}
-              className="fixed inset-0 bg-slate-950"
+              className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm"
             />
 
-            {/* Translucent drawer container */}
+            {/* Translucent bottom-sheet container optimized for iPhone 16/17 */}
             <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-[310px] bg-[#060a1e]/95 backdrop-blur-2xl border-r border-white/10 h-full flex flex-col justify-between p-6 z-10 text-white"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 240 }}
+              className="relative w-full max-w-lg md:max-w-[325px] bg-white/98 backdrop-blur-2xl border border-sky-100 md:border-r h-[88vh] md:h-[calc(100vh-2rem)] md:m-4 rounded-t-[2.5rem] md:rounded-[2rem] flex flex-col justify-between p-6 pb-8 z-10 text-slate-900 shadow-2xl overflow-y-auto scrollbar-none focus:outline-none"
             >
               <div>
+                {/* iPhone drag handle bar indicator */}
+                <div className="w-14 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 shrink-0 block md:hidden" />
+
                 {/* Header of drawer */}
-                <div className="flex items-center justify-between pb-6 border-b border-white/5 mb-6">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5 font-sans">
                   <div className="flex items-center gap-2">
-                    <GraduationCap className="h-6 w-6 text-cyan-400" />
-                    <span className="font-extrabold text-base tracking-wide text-white">TopGrand Menyu</span>
+                    <GraduationCap className="h-6 w-6 text-sky-600 animate-pulse" />
+                    <span className="font-extrabold text-base tracking-wide text-slate-900">TopGrand Menyu</span>
                   </div>
                   <button
                     onClick={() => setMenuOpen(false)}
-                    className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-blue-200 transition"
+                    className="p-1.5 rounded-xl bg-slate-100/80 hover:bg-slate-200 text-slate-500 transition cursor-pointer"
                   >
                     <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 {/* Telegram info badge */}
-                <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-blue-500/5 border border-cyan-500/20">
-                  <span className="text-[9px] font-black tracking-widest text-cyan-400 uppercase block mb-1">Rasmiy Telegram Kanal</span>
+                <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-sky-400/10 to-blue-500/5 border border-sky-100">
+                  <span className="text-[9px] font-black tracking-widest text-sky-700 uppercase block mb-1">Rasmiy Telegram Kanal</span>
                   <a 
                     href="https://t.me/TopGrands" 
                     target="_blank" 
                     rel="noreferrer noopener"
-                    className="flex items-center justify-between text-xs font-bold text-white hover:text-cyan-300"
+                    className="flex items-center justify-between text-xs font-bold text-slate-900 hover:text-sky-600 transition"
                   >
                     <span>@TopGrands platformasi</span>
-                    <ExternalLink className="h-3.5 w-3.5 text-cyan-400 animate-pulse" />
+                    <ExternalLink className="h-3.5 w-3.5 text-sky-600" />
                   </a>
                 </div>
 
                 {/* List of sections with description */}
                 <div className="space-y-2">
-                  <p className="text-[10px] font-mono tracking-widest text-blue-200/40 uppercase font-black px-2 pb-1">
+                  <p className="text-[10px] font-mono tracking-widest text-slate-400 uppercase font-black px-2 pb-1">
                     Bo'limlar va Modullar
                   </p>
                   
@@ -266,14 +256,14 @@ export default function App() {
                         }}
                         className={`w-full text-left p-3 rounded-2xl transition border flex items-center gap-3.5 cursor-pointer group ${
                           activeTab === item.id
-                            ? 'bg-gradient-to-r from-blue-900/40 to-cyan-500/20 text-white border-cyan-400/35'
-                            : 'bg-transparent text-blue-200 border-transparent hover:bg-white/5 hover:text-white'
+                            ? 'bg-sky-50 text-sky-900 border-sky-200/50 font-extrabold'
+                            : 'bg-transparent text-slate-700 border-transparent hover:bg-slate-50 hover:text-slate-950 font-semibold'
                         }`}
                       >
                         <div className={`p-2 rounded-xl border ${
                           activeTab === item.id 
-                            ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-300' 
-                            : 'bg-white/5 border-white/5 text-blue-300 group-hover:bg-white/10 group-hover:text-cyan-400'
+                            ? 'bg-sky-500 border-sky-400 text-white' 
+                            : 'bg-slate-100 border-slate-150 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-750'
                         }`}>
                           <IconComp className="h-4.5 w-4.5" />
                         </div>
@@ -281,12 +271,12 @@ export default function App() {
                           <p className="text-xs font-bold truncate leading-snug">
                             {item.label}
                           </p>
-                          <p className="text-[10px] text-blue-300/40 truncate mt-0.5">
+                          <p className="text-[10px] text-slate-500 truncate mt-0.5 font-light">
                             {item.desc}
                           </p>
                         </div>
                         {item.badge && (
-                          <span className="text-[8px] font-black tracking-widest text-[#d97706] bg-amber-500/10 border border-amber-400/25 px-1.5 py-0.5 rounded-full">
+                          <span className="text-[8px] font-black tracking-widest text-[#b45309] bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded-full">
                             {item.badge}
                           </span>
                         )}
@@ -297,19 +287,19 @@ export default function App() {
               </div>
 
               {/* Bottom drawer elements */}
-              <div className="pt-6 border-t border-white/5 text-center space-y-3.5">
+              <div className="pt-6 border-t border-slate-100 text-center space-y-3.5">
                 {user.isLoggedIn ? (
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-left">
-                    <span className="text-[9px] font-bold text-blue-300 uppercase block">Hisobingiz:</span>
-                    <span className="text-xs font-extrabold text-white truncate block mt-1">
+                  <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4 text-left">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase block">Hisobingiz:</span>
+                    <span className="text-xs font-extrabold text-slate-900 truncate block mt-1">
                       {user.name} {user.surname}
                     </span>
-                    <span className="text-[10px] text-cyan-400 mt-1 block font-mono font-semibold">
+                    <span className="text-[10px] text-sky-600 mt-1 block font-mono font-semibold">
                       {user.isPremium ? '💎 Premium active' : '🎁 Bepul versiya'}
                     </span>
                     <button
                       onClick={handleLogout}
-                      className="mt-3.5 w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold rounded-xl border border-red-500/20 transition cursor-pointer"
+                      className="mt-3.5 w-full py-2 bg-red-50 hover:bg-red-100 text-red-650 text-xs font-bold rounded-xl border border-red-200 transition cursor-pointer"
                     >
                       Menyudan Chiqish
                     </button>
@@ -320,14 +310,14 @@ export default function App() {
                       setMenuOpen(false);
                       handleOpenAuth('login');
                     }}
-                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-lg"
+                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-sky-500 hover:brightness-110 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-lg shadow-sky-550/10"
                   >
                     Hisobga Kirish
                   </button>
                 )}
 
                 {/* Help numbers */}
-                <div className="text-[10px] text-blue-300/40 font-semibold font-mono">
+                <div className="text-[10px] text-slate-400 font-semibold font-mono">
                   TopGrand Tech Support Team.
                 </div>
               </div>
@@ -338,40 +328,34 @@ export default function App() {
 
       <main className="flex-grow pb-16 relative z-10">
         
-        {/* HERO HEADER AREA (STARS CONSTELLATION) */}
-        <Hero 
-          user={user} 
-          onOpenAuth={() => handleOpenAuth('login')}
-          onLogout={handleLogout}
-          onOpenPremium={handleOpenPremium}
-          activeTab={activeTab}
-          setActiveTab={(tab) => {
-            if (tab === 'all') setActiveTab('all');
-            else if (tab === 'Chet elga Tayyorlov (AI)' || tab === 'ai') setActiveTab('ai');
-            else if (tab === 'Grand Kalkulyatori' || tab === 'uz') setActiveTab('uz');
-            else setActiveTab('apply');
-          }}
-        />
+        {/* HERO HEADER AREA (STARS CONSTELLATION) - ONLY ON HOME TAB AS MANDATED */}
+        {activeTab === 'home' && (
+          <Hero 
+            user={user} 
+            onOpenAuth={() => handleOpenAuth('login')}
+            onLogout={handleLogout}
+            onOpenPremium={handleOpenPremium}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
+        )}
 
-        {/* GLASSMORPHIC EXTRA NAVIGATION RAIL (No Whites) */}
-        <div className="w-full max-w-7xl mx-auto px-6 py-2 flex flex-wrap items-center justify-center gap-3">
-          {navigationItems.map((nav) => (
+        {/* ELEGANT BACK BUTTON TO RETURN TO HOME SCREEN FROM SUB-SECTIONS */}
+        {activeTab !== 'home' && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 mt-6" id="back-to-home-bar">
             <button
-              key={nav.id}
-              onClick={() => setActiveTab(nav.id)}
-              className={`px-5 py-3 rounded-2xl text-xs font-bold transition duration-200 border cursor-pointer ${
-                activeTab === nav.id
-                  ? 'bg-cyan-500/10 text-cyan-300 border-cyan-400/35 shadow-lg shadow-cyan-500/5 backdrop-blur-md ring-2 ring-cyan-400/20 font-extrabold'
-                  : 'text-blue-200/70 hover:text-white hover:bg-white/5 border-transparent bg-transparent font-semibold'
-              }`}
+              onClick={() => setActiveTab('home')}
+              className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl border border-sky-200 bg-white hover:bg-sky-50 text-sky-950 font-black text-xs transition duration-150 shadow-md active:scale-95 cursor-pointer"
+              id="btn-global-back-home"
             >
-              {nav.label}
+              <ArrowLeft className="h-4.5 w-4.5 text-sky-600" />
+              <span>Orqaga Qaytish (Bosh Sahifa 🏠)</span>
             </button>
-          ))}
-        </div>
+          </div>
+        )}
 
         {/* ACTIVE TAB VIEWS SEGMENTATION */}
-        <div className="mt-8">
+        <div className="mt-4">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -380,6 +364,15 @@ export default function App() {
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.18 }}
             >
+              {activeTab === 'home' && (
+                <HomeSection 
+                  user={user}
+                  onOpenAuth={() => handleOpenAuth('login')}
+                  onOpenPremium={handleOpenPremium}
+                  setActiveTab={setActiveTab}
+                />
+              )}
+
               {activeTab === 'all' && (
                 <UniversityExplorer 
                   user={user} 
@@ -412,16 +405,16 @@ export default function App() {
         </div>
       </main>
 
-      {/* FOOTER - DARK ATMOSPHERIC NO WRITING DECOR */}
-      <footer className="relative z-10 w-full bg-[#02040b] border-t border-white/5 px-8 py-5 text-white flex flex-col sm:flex-row justify-between items-center text-xs font-semibold gap-3">
+      {/* FOOTER - LIGHT ELEGANT NO WRITING DECOR */}
+      <footer className="relative z-10 w-full bg-white border-t border-sky-100 px-8 py-5 text-slate-800 flex flex-col sm:flex-row justify-between items-center text-xs font-semibold gap-3 shadow-inner">
         <div className="flex items-center gap-2">
-          <span className="font-extrabold text-white text-sm tracking-wider">TOPGRAND™</span>
-          <span className="text-blue-300/40 font-normal">| Global Oliy Ta'lim & Sun'iy Intellekt Platformasi © 2026</span>
+          <span className="font-extrabold text-slate-900 text-sm tracking-wider">TOPGRAND™</span>
+          <span className="text-slate-500 font-normal">| Global Oliy Ta'lim & Sun'iy Intellekt Platformasi © 2026</span>
         </div>
-        <div className="flex gap-4 items-center font-mono text-[10px] text-blue-200/40 font-bold uppercase">
+        <div className="flex gap-4 items-center font-mono text-[10px] text-slate-500 font-bold uppercase">
           <span>SOP CHECK AI: ACTIVE</span>
           <span>VISA COPILOT: ONLINE</span>
-          <a href="https://t.me/TopGrands" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 transition">@TopGrands Kanal</a>
+          <a href="https://t.me/TopGrands" target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:text-sky-700 transition">@TopGrands Kanal</a>
         </div>
       </footer>
 
@@ -440,66 +433,59 @@ export default function App() {
       {/* PREMIUM SUBSCRIPTION MODAL */}
       <AnimatePresence>
         {showPremiumModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 backdrop-blur-sm p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md rounded-3xl border border-white/10 bg-[#060a1e]/90 p-8 shadow-2xl backdrop-blur-xl text-center text-white"
+              className="relative w-full max-w-md rounded-3xl border border-sky-100 bg-white p-8 shadow-2xl backdrop-blur-xl text-center text-slate-900"
             >
               <button
                 onClick={() => setShowPremiumModal(false)}
-                className="absolute top-4 right-4 text-blue-200 hover:text-white hover:bg-white/10 p-1.5 rounded-full cursor-pointer"
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-full cursor-pointer transition-colors"
                 id="btn-close-premium"
               >
                 <X className="h-5 w-5" />
               </button>
 
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-yellow-400 to-amber-500 p-3 shadow-lg shadow-yellow-500/20 border border-white/10">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-yellow-400 to-amber-500 p-3 shadow-lg shadow-yellow-500/20 border border-sky-100">
                 <Gem className="h-8 w-8 text-white animate-pulse" />
               </div>
 
-              <h2 className="mt-4 text-2xl font-black text-white">TopGrand Premium 🏆</h2>
-              <p className="mt-1 text-xs text-yellow-500 font-bold uppercase tracking-wider">Tez orada Obunalar O'tadi</p>
+              <h2 className="mt-4 text-2xl font-black text-slate-900">TopGrand Premium 🏆</h2>
+              <p className="mt-1 text-xs text-yellow-600 font-bold uppercase tracking-wider">Tez orada Obunalar O'tadi</p>
 
-              <div className="my-6 rounded-2xl bg-white/5 border border-white/10 p-5 space-y-3.5 text-left text-xs text-blue-100">
-                <p className="text-xs font-bold text-white text-center uppercase tracking-widest text-cyan-300">Premium cheksiz imkoniyatlari:</p>
+              <div className="my-6 rounded-2xl bg-sky-50/50 border border-sky-100 p-5 space-y-3.5 text-left text-xs text-slate-700">
+                <p className="text-xs font-bold text-slate-900 text-center uppercase tracking-widest text-sky-700">Premium cheksiz imkoniyatlari:</p>
                 <div className="space-y-2 font-semibold">
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-cyan-400 shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-sky-600 shrink-0" />
                     <span>Real 30 ta sun'iy intellekt modullaridan cheksiz so'rovlar</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-cyan-400 shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-sky-600 shrink-0" />
                     <span>Universitet daxshatli intervyu simulyatorlarini to'liq ochish</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-cyan-400 shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-sky-600 shrink-0" />
                     <span>Xorijiy huquq va vizaviy maslahatlar bo'limlari</span>
                   </div>
                 </div>
               </div>
 
-              {/* Sandbox action list */}
+              {/* Premium acquisition list */}
               <div className="space-y-3">
                 <button
-                  onClick={() => alert("Premium to'lov imkoniyati integratsiya jarayonida. Quyidagi bepul sinov tugmasisiz hozircha unumli foydalaning.")}
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 hover:brightness-110 active:scale-95 transition font-bold text-xs uppercase tracking-wider text-black shadow-lg"
+                  onClick={() => alert("Premium to'lov integratsiyasi faollashtirilmoqda! Iltimos, administrator bilan bog'laning.")}
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 hover:brightness-110 active:scale-[0.98] transition font-bold text-xs uppercase tracking-wider text-black shadow-lg cursor-pointer"
                 >
                   Premium Obunani Xarid qilish
-                </button>
-
-                <button
-                  onClick={handleForcePremium}
-                  className="w-full py-2.5 rounded-xl border border-dashed border-cyan-450/40 bg-cyan-400/5 hover:bg-cyan-400/15 transition text-xs font-bold text-cyan-300 cursor-pointer"
-                >
-                  ⚡ Sinov Rejimi: Premium-ni Bepul yoqish (Unlock!)
                 </button>
               </div>
 
               <button
                 onClick={() => setShowPremiumModal(false)}
-                className="mt-4 text-xs text-blue-300 hover:text-white"
+                className="mt-4 text-xs text-slate-500 hover:text-slate-800 transition"
               >
                 Orqaga qaytish
               </button>

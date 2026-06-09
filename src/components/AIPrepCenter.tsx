@@ -440,7 +440,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
   };
 
   const getToolLimit = (toolKey: string) => {
-    return isInteractiveChat(toolKey) ? 5 : 1;
+    return 3;
   };
 
   // Limit Check synchronized perfectly with localStorage and user context
@@ -537,6 +537,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
     setSelectedTool(tool);
     setResult('');
     setChatMessage('');
+    setChatHistory([]); // Reset conversation logs for all tools
 
     if (tool.key === 'blind_interviewer') {
       setChatHistory([
@@ -560,7 +561,8 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
     }
 
     setLoading(true);
-    const isChat = isInteractiveChat(selectedTool.key);
+    const isInteractive = isInteractiveChat(selectedTool.key);
+    const isChatMode = isInteractive || chatHistory.length > 0;
 
     const inputDataMap: Record<string, string> = {};
     const configuredFields = toolFields[selectedTool.key] || [];
@@ -568,13 +570,25 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
       inputDataMap[f.id] = formValues[f.id] || '';
     });
 
-    if (isChat) {
+    let primaryUserMsgText = '';
+    if (!isInteractive && chatHistory.length === 0) {
+      // First submission of forms - convert to initial chat log
+      const promptParts = configuredFields.map(f => `• **${f.label}**: ${formValues[f.id] || "(Kiritilmadi)"}`);
+      primaryUserMsgText = `Tahlil uchun kiritilgan boshlang'ich ma'lumotlar:\n\n${promptParts.join("\n")}`;
+    }
+
+    if (isChatMode) {
       inputDataMap['userMessage'] = chatMessage;
       inputDataMap['history'] = JSON.stringify(chatHistory.slice(-6));
     }
 
     try {
-      if (isChat) {
+      if (isInteractive) {
+        setChatHistory(prev => [...prev, { sender: 'user', text: chatMessage }]);
+        setChatMessage('');
+      } else if (chatHistory.length === 0) {
+        setChatHistory([{ sender: 'user', text: primaryUserMsgText }]);
+      } else {
         setChatHistory(prev => [...prev, { sender: 'user', text: chatMessage }]);
         setChatMessage('');
       }
@@ -584,7 +598,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           toolType: selectedTool.key,
-          inputData: inputDataMap,
+          inputData: isChatMode ? inputDataMap : { ...inputDataMap, userMessage: primaryUserMsgText },
           userContext: {
             name: user.name,
             surname: user.surname,
@@ -595,10 +609,15 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
 
       const data = await response.json();
       if (response.ok && data.text) {
-        if (isChat) {
+        if (isInteractive) {
           setChatHistory(prev => [...prev, { sender: 'ai', text: data.text }]);
+        } else if (chatHistory.length === 0) {
+          setChatHistory([
+            { sender: 'user', text: primaryUserMsgText },
+            { sender: 'ai', text: data.text }
+          ]);
         } else {
-          setResult(data.text);
+          setChatHistory(prev => [...prev, { sender: 'ai', text: data.text }]);
         }
         await recordUsageLocallyAndRemote(selectedTool.key);
       } else {
@@ -617,11 +636,11 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
     : tools.filter(t => t.category === activeCategory);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-12 text-white" id="ai-center-root">
+    <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-12 text-slate-900 animate-fade-in" id="ai-center-root">
       
       <AnimatePresence mode="wait">
         {!selectedTool ? (
-          /* TOOL DIRECTORY GRID WITH TRANSLUCENT PREMIUM CARDS */
+          /* TOOL DIRECTORY GRID WITH CLEAN DETAILED HIGH CONTRAST CARDS */
           <motion.div 
             key="catalog"
             initial={{ opacity: 0, y: 15 }}
@@ -631,54 +650,54 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
           >
             {/* HERO PANELS HEADER */}
             <div className="text-center max-w-3xl mx-auto space-y-5">
-              <span className="inline-flex items-center gap-2 bg-cyan-400/10 border border-cyan-400/30 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest text-cyan-300 uppercase font-mono">
-                <Sparkles className="h-3.5 w-3.5 text-cyan-400 animate-pulse" />
+              <span className="inline-flex items-center gap-2 bg-blue-105 border border-blue-200/60 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest text-blue-800 uppercase font-mono shadow-xs">
+                <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
                 <span>TOPGRAND COGNITIVE SUITE v3.0</span>
               </span>
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
+              <h2 className="text-3xl md:text-5xl font-black text-slate-950 tracking-tight leading-tight">
                 Chet elga <br />
-                <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-blue-700 via-indigo-900 to-sky-850 bg-clip-text text-transparent">
                   Daxshatli 30 ta AI Funksiya
                 </span>
               </h2>
-              <p className="text-xs md:text-sm text-blue-200/70 max-w-xl mx-auto leading-relaxed font-semibold">
+              <p className="text-xs md:text-sm text-slate-700 max-w-xl mx-auto leading-relaxed font-bold">
                 Konsalting firmalarsiz, sun'iy intellekt orqali profilingizni xavfsiz mukammallikka ko'taring va haqiqiy dunyo grantlarini qo'lga kiriting!
               </p>
 
               {/* METRIC BADGES */}
               <div className="flex flex-wrap justify-center items-center gap-3 pt-3 text-[10px] font-mono font-bold">
-                <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-2 shadow-sm text-cyan-300 backdrop-blur-md">
-                  <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+                <div className="bg-white border border-blue-200 rounded-xl px-4 py-2 flex items-center gap-2 shadow-xs text-blue-900 font-extrabold">
+                  <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
                   <span>INTELLIGENCE:</span>
-                  <span className="font-extrabold text-white">ACTIVE (GEMINI 2.5)</span>
+                  <span className="font-extrabold text-blue-900">ACTIVE (GEMINI 3.5)</span>
                 </div>
 
-                <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-2 shadow-sm text-blue-300 backdrop-blur-md">
-                  <Clock className="h-3.5 w-3.5 text-blue-400" />
+                <div className="bg-white border border-blue-200 rounded-xl px-4 py-2 flex items-center gap-2 shadow-xs text-slate-800 font-extrabold">
+                  <Clock className="h-3.5 w-3.5 text-blue-600 stroke-[2.5px]" />
                   <span>SINOV RESETGACHA:</span>
-                  <span className="text-yellow-400 font-extrabold">{countdownText}</span>
+                  <span className="text-amber-800 font-extrabold">{countdownText}</span>
                 </div>
 
                 <button 
                   onClick={clearUsageStats}
                   title="Limits reset"
-                  className="p-2 bg-white/5 border border-white/10 hover:border-red-500 hover:bg-red-500/10 text-blue-300 rounded-xl transition cursor-pointer backdrop-blur-md"
+                  className="p-2 bg-white border border-blue-200 hover:border-red-500 hover:bg-red-50 text-slate-600 hover:text-red-700 rounded-xl transition cursor-pointer shadow-xs"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-4.5 w-4.5" />
                 </button>
               </div>
             </div>
 
-            {/* Glass Category Filter Tabs */}
-            <div className="flex flex-wrap justify-center gap-2 bg-white/5 border border-white/10 p-2 rounded-3xl max-w-2xl mx-auto backdrop-blur-lg">
+            {/* Category Filter Tabs with clean contrast */}
+            <div className="flex flex-wrap justify-center gap-2 bg-white border border-blue-150 p-2 rounded-[1.75rem] max-w-2xl mx-auto shadow-sm">
               {categories.map((cat) => (
                 <button
                   key={cat.key}
                   onClick={() => setActiveCategory(cat.key)}
-                  className={`px-4 py-2.5 rounded-2xl text-[11px] font-extrabold tracking-wider transition cursor-pointer border uppercase ${
+                  className={`px-4 py-2.5 rounded-2xl text-[11px] font-extrabold tracking-wider transition-all duration-200 cursor-pointer border uppercase ${
                     activeCategory === cat.key
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-white/25 shadow-lg shadow-cyan-500/10'
-                      : 'bg-transparent text-blue-200 border-transparent hover:text-white hover:bg-white/5'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                      : 'bg-transparent text-slate-600 border-transparent hover:text-blue-900 hover:bg-slate-50'
                   }`}
                 >
                   {cat.label}
@@ -686,7 +705,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
               ))}
             </div>
 
-            {/* Grid display cards */}
+            {/* Grid display cards - Pure High Contrast White Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTools.map((tool) => {
                 const IconComp = tool.icon;
@@ -699,21 +718,21 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                   <motion.div
                     key={tool.key}
                     whileHover={{ scale: 1.015, y: -3 }}
-                    className="relative group rounded-3xl border border-white/10 bg-slate-900/15 p-6 flex flex-col justify-between shadow-xl backdrop-blur-xl hover:border-cyan-405/40 hover:bg-slate-900/30 transition-all duration-300"
+                    className="relative group rounded-[2rem] border border-blue-100 bg-white p-6 flex flex-col justify-between shadow-md shadow-blue-500/[0.02] hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300"
                     id={`tool-card-${tool.key}`}
                   >
                     <div>
                       {/* Popular & category badges */}
                       <div className="flex justify-between items-center mb-5">
-                        <span className="text-[9px] uppercase font-bold tracking-widest text-cyan-300 bg-cyan-500/10 border border-cyan-400/20 px-3 py-1 rounded-full">
+                        <span className="text-[9px] uppercase font-black tracking-widest text-blue-800 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
                           {tool.category === 'strategist' && '🧭 THE STRATEGIST'}
                           {tool.category === 'content_lab' && '✍️ THE CONTENT LAB'}
                           {tool.category === 'simulator' && '🗣️ THE SIMULATOR'}
                           {tool.category === 'future_path' && '🚀 THE FUTURE PATH'}
                         </span>
                         {tool.popular && (
-                          <span className="flex items-center gap-1 text-[8px] font-black tracking-widest text-amber-300 bg-amber-500/10 border border-amber-400/20 px-2.5 py-1 rounded-full uppercase animate-pulse">
-                            <Sparkles className="h-2.5 w-2.5 text-amber-400" />
+                          <span className="flex items-center gap-1 text-[8px] font-black tracking-widest text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full uppercase animate-pulse">
+                            <Sparkles className="h-2.5 w-2.5 text-amber-500" />
                             Mashhur
                           </span>
                         )}
@@ -721,14 +740,14 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
 
                       {/* Icon with Title */}
                       <div className="flex items-start gap-4">
-                        <div className={`p-3 rounded-2xl bg-gradient-to-tr ${tool.color} text-white shadow-lg shrink-0`}>
-                          <IconComp className="h-5.5 w-5.5" />
+                        <div className={`p-3.5 rounded-2xl bg-gradient-to-tr ${tool.color} text-white shadow-lg shrink-0`}>
+                          <IconComp className="h-5.5 w-5.5 stroke-[2.5px]" />
                         </div>
                         <div>
-                          <h3 className="font-extrabold text-white leading-snug group-hover:text-cyan-400 transition text-sm sm:text-base">
+                          <h3 className="font-black text-blue-950 leading-snug group-hover:text-blue-600 transition-colors text-sm sm:text-base">
                             {tool.title}
                           </h3>
-                          <p className="text-xs text-blue-200/50 font-normal mt-2 leading-relaxed">
+                          <p className="text-xs text-slate-700 font-bold mt-2 leading-relaxed">
                             {tool.description}
                           </p>
                         </div>
@@ -736,14 +755,14 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                     </div>
 
                     {/* Footer bar indicators */}
-                    <div className="mt-6 pt-5 border-t border-white/5 flex items-center justify-between gap-4">
+                    <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between gap-4">
                       <div className="text-[10px] font-mono">
                         {user.isPremium ? (
-                          <span className="text-cyan-400 flex items-center gap-1.5 font-bold">
-                            <Gem className="h-3 w-3 animate-bounce" /> PRO REJA (ONLINE)
+                          <span className="text-blue-600 flex items-center gap-1.5 font-bold">
+                            <Gem className="h-3.5 w-3.5 text-blue-500" /> PRO REJA (ONLINE)
                           </span>
                         ) : (
-                          <span className={`${isLimitLocked ? 'text-red-400' : 'text-blue-300/80'} font-bold`}>
+                          <span className={`${isLimitLocked ? 'text-red-600 font-black' : 'text-slate-600'} font-black`}>
                             Bepul limit: {limitRemaining} / {limitMax}
                           </span>
                         )}
@@ -751,15 +770,15 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
 
                       <button
                         onClick={() => handleSelectTool(tool)}
-                        className={`px-4 py-2 rounded-xl text-[10px] uppercase font-bold flex items-center gap-1.5 cursor-pointer transition ${
+                        className={`px-4 py-2 rounded-xl text-[10px] uppercase font-black tracking-wider flex items-center gap-1.5 cursor-pointer border transition-all ${
                           isLimitLocked && !user.isPremium
-                            ? 'bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:bg-rose-500/30'
-                            : 'bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-cyan-400/30'
+                            ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
+                            : 'bg-slate-50 border-slate-150 hover:bg-slate-100 text-slate-800'
                         }`}
                         id={`btn-select-tool-${tool.key}`}
                       >
                         <span>Tekshirish</span>
-                        <ArrowRight className="h-3 w-3" />
+                        <ArrowRight className="h-3 w-3 stroke-[2.5px]" />
                       </button>
                     </div>
                   </motion.div>
@@ -768,28 +787,28 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
             </div>
           </motion.div>
         ) : (
-          /* SINGLE DETAILED WORKSPACE VIEW (FULL SCREEN OVERLAY WITH ONY BACK BUTTON AT TOP) */
+          /* SINGLE DETAILED WORKSPACE VIEW (FULL SCREEN WORKSPACE OVERLAY WITH CRISP BRIGHT WHITE LABELS AND BACK BUTTON) */
           <motion.div
             key="workspace"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="w-full max-w-6xl mx-auto rounded-3xl border border-white/10 bg-[#0a0f26]/60 p-6 md:p-8 shadow-2xl backdrop-blur-2xl"
+            className="w-full max-w-6xl mx-auto rounded-[2.5rem] border border-blue-950/20 bg-[#0a0f26] p-6 md:p-8 shadow-2xl relative"
             id="detailed-workspace"
           >
-            {/* ONLY elegant back button at the very top as requested! */}
+            {/* Elegant high-contrast top back button bar */}
             <div className="flex items-center justify-between pb-6 border-b border-white/10 mb-8" id="workspace-back-header">
               <button
                 onClick={() => setSelectedTool(null)}
-                className="flex items-center gap-2.5 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold text-xs transition cursor-pointer"
+                className="flex items-center gap-2.5 px-5 py-3 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-extrabold text-xs transition cursor-pointer"
                 id="btn-back-to-catalog"
               >
-                <ArrowLeft className="h-4 w-4 text-cyan-400" />
+                <ArrowLeft className="h-4.5 w-4.5 text-cyan-400 stroke-[2.5px]" />
                 <span>Orqaga Qaytish</span>
               </button>
 
               <div className="flex items-center gap-3">
-                <span className="text-[11px] font-extrabold tracking-widest text-cyan-400 font-mono uppercase bg-cyan-400/10 border border-cyan-400/20 px-3 py-1 rounded-full">
+                <span className="text-[11px] font-black tracking-widest text-cyan-400 font-mono uppercase bg-cyan-450/10 border border-cyan-400/20 px-3.5 py-1 rounded-full">
                   {selectedTool.title}
                 </span>
                 {user.isPremium ? (
@@ -797,37 +816,38 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                     <Gem className="h-3 w-3 text-yellow-400 shrink-0" /> PRO Obuna
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 bg-white/5 border border-white/10 text-blue-200 px-3 py-1 rounded-full text-[9px] font-bold uppercase">
-                    TEKIN SINOV
+                  <span className="inline-flex items-center gap-1 bg-white/5 border border-white/10 text-cyan-200 px-3 py-1 rounded-full text-[9px] font-extrabold uppercase font-mono">
+                    LIMIT: {limits[selectedTool.key]?.remaining ?? 3} / 3 REJA
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Split layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            {/* Split workspace layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch text-white">
               
-              {/* Form entries for specific tools */}
-              <div className="lg:col-span-5 flex flex-col justify-between">
+              {/* Left Side: Inputs list & execution instructions */}
+              <div className="lg:col-span-12 xl:col-span-5 flex flex-col justify-between text-left">
                 <div>
                   <div className="flex items-center gap-4 mb-6">
-                    <div className={`p-3.5 rounded-2xl bg-gradient-to-tr ${selectedTool.color} text-white shadow-xl`}>
-                      {React.createElement(selectedTool.icon, { className: 'h-6 w-6' })}
+                    <div className={`p-4 rounded-2xl bg-gradient-to-tr ${selectedTool.color} text-white shadow-xl`}>
+                      {React.createElement(selectedTool.icon, { className: 'h-6.5 w-6.5 strike-[2.5px]' })}
                     </div>
                     <div>
-                      <h3 className="text-lg font-extrabold text-white leading-tight">{selectedTool.title}</h3>
-                      <p className="text-xs text-blue-200/50 mt-1 font-semibold capitalize">
-                        Yo'nalish: <span className="text-cyan-400">{selectedTool.category.replace(/_/g, " ")}</span>
+                      <h3 className="text-lg md:text-xl font-extrabold text-white leading-tight">{selectedTool.title}</h3>
+                      <p className="text-xs text-blue-200/60 mt-1 font-bold uppercase tracking-wider">
+                        Bo'lim: <span className="text-cyan-400">{selectedTool.category.replace(/_/g, " ")}</span>
                       </p>
                     </div>
                   </div>
 
-                  {!isInteractiveChat(selectedTool.key) ? (
-                    // static form inputs mapping
+                  {/* Render inputs statically only if chat is not active yet */}
+                  {chatHistory.length === 0 ? (
+                    // Static forms entries
                     <form onSubmit={executeAIRequest} className="space-y-4">
                       {toolFields[selectedTool.key]?.map((field) => (
                         <div key={field.id} className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-blue-200/80">
+                          <label className="block text-xs font-black text-cyan-300 uppercase tracking-wider">
                             {field.label}
                           </label>
                           {field.type === 'textarea' ? (
@@ -835,7 +855,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                               rows={5}
                               value={formValues[field.id] || ''}
                               onChange={(e) => setFormValues({ ...formValues, [field.id]: e.target.value })}
-                              className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 px-4 text-xs font-semibold text-white placeholder-blue-300/20 outline-none focus:border-cyan-400 transition"
+                              className="w-full rounded-2xl border border-slate-700 bg-slate-900/80 py-3.5 px-4 text-xs font-semibold text-white placeholder-slate-500 outline-none focus:border-cyan-400 focus:bg-slate-900 transition-colors"
                               placeholder={field.placeholder}
                             ></textarea>
                           ) : (
@@ -843,7 +863,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                               type="text"
                               value={formValues[field.id] || ''}
                               onChange={(e) => setFormValues({ ...formValues, [field.id]: e.target.value })}
-                              className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 px-4 text-xs font-semibold text-white placeholder-blue-300/20 outline-none focus:border-cyan-400 transition"
+                              className="w-full rounded-2xl border border-slate-700 bg-slate-900/80 py-3.5 px-4 text-xs font-semibold text-white placeholder-slate-500 outline-none focus:border-cyan-400 focus:bg-slate-900 transition-colors"
                               placeholder={field.placeholder}
                             />
                           )}
@@ -853,10 +873,10 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                       <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full py-4 rounded-xl font-bold text-xs text-white uppercase tracking-widest shadow-lg transition duration-200 cursor-pointer ${
+                        className={`w-full py-4 rounded-2xl font-black text-xs text-white uppercase tracking-widest shadow-xl transition-all duration-200 cursor-pointer ${
                           loading 
                             ? 'bg-slate-800 border border-white/5 shadow-none cursor-not-allowed opacity-[0.8]' 
-                            : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110 active:scale-95'
+                            : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110 active:scale-[0.98]'
                         }`}
                         id="btn-execute-static"
                       >
@@ -871,49 +891,61 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                       </button>
                     </form>
                   ) : (
-                    // Interactive Chat Simulators
-                    <div className="space-y-4">
-                      <p className="text-xs text-blue-200/70 leading-relaxed font-semibold">
-                        Siz jonli tarzda TopGrand virtual suhbat komissiyasi bilan muloqot qilyapsiz. Quyida javobingizni mantiqiy va asoslangan bering.
-                      </p>
-                      <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-xs text-amber-300 leading-relaxed">
-                        ⚠️ **Suhbat qoidasi**: Bepul foydalanuvchi variantida suhbat {getToolLimit(selectedTool.key)} marta xabar almashishdan so'ng to'xtaydi. Natijani bepul reja yakunida PDF yuklash imkoni berilmaydi. Cheksiz suhbat uchun PRO obunani olganingiz ma'qul.
+                    // Interactive Active Chat dialogue logs instructions
+                    <div className="space-y-5">
+                      <div className="p-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 text-xs text-slate-100 leading-relaxed font-semibold animate-fade-in">
+                        <p className="font-extrabold text-cyan-400 mb-1 flex items-center gap-1">
+                          <Sparkles className="h-4.5 w-4.5" />
+                          <span>Jonli Muloqot Faollashdi!</span>
+                        </p>
+                        Ushbu modulda kognitiv tahlil yakunlandi. AI taqdim etgan tahlil bo'yicha savollarga javob bering yoki to'g'ridan-to'g'ri o'ng paneldagi konsolda muloqotni davom ettiring!
                       </div>
+                      
+                      <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-xs text-amber-300 leading-relaxed font-bold animate-fade-in">
+                        ⚠️ **Suhbat tartibi**: Bosh sahifa yoki katalogga qaytsangiz suhbat tarixi tozalanadi. Hozirgi mavzuni oxirigacha tahlil qiling.
+                      </div>
+
+                      {/* Restart tool button */}
+                      <button
+                        onClick={() => {
+                          setChatHistory([]);
+                          setResult('');
+                        }}
+                        className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-extrabold text-xs transition cursor-pointer text-center"
+                      >
+                        Ma'lumotlarni tozalash va yangidan boshlash
+                      </button>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-6 border-t border-white/5 mt-8 text-[10px] text-blue-200/30 font-mono font-bold">
-                  TopGrand AI Model is hosted securely. Encrypted pipeline.
+                <div className="pt-6 border-t border-white/10 mt-8 text-[10px] text-blue-200/30 font-mono font-bold uppercase tracking-widest xl:block hidden">
+                  Secure Intelligence Connection Established.
                 </div>
               </div>
 
-              {/* Real-time responses pane (Translucent sapphire element, crystal clear text) */}
-              <div className="lg:col-span-7 flex flex-col">
-                <div className="flex-1 flex flex-col rounded-3xl border border-white/15 bg-white/5 p-6 md:p-8 min-h-[420px] max-h-[600px] overflow-hidden text-white shadow-2xl justify-between">
-                  {/* Panel logs bar */}
-                  <div className="flex justify-between items-center pb-3 border-b border-white/5 mb-4 shrink-0 font-mono text-[9px] text-cyan-300/60 font-black tracking-widest uppercase">
-                    <span>AI Central Live Stream Outputs</span>
+              {/* Right Side: Log Console with extremely readable pure white lettering */}
+              <div className="lg:col-span-12 xl:col-span-7 flex flex-col justify-between">
+                <div className="flex-1 flex flex-col rounded-3xl border border-white/15 bg-slate-900/60 p-5 md:p-7 min-h-[440px] max-h-[600px] overflow-hidden text-white shadow-inner justify-between">
+                  
+                  {/* Title Console log */}
+                  <div className="flex justify-between items-center pb-3 border-b border-white/5 mb-4 shrink-0 font-mono text-[9px] text-cyan-400 font-extrabold tracking-widest uppercase">
+                    <span>TopGrand AI Model Stream Console</span>
                     <span className="flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-ping" />
                   </div>
 
-                  {/* Body depends on interactive type */}
-                  <div className="flex-1 overflow-y-auto pr-2 space-y-4 text-xs font-semibold leading-relaxed">
-                    {!isInteractiveChat(selectedTool.key) ? (
-                      result ? (
-                        <div className="whitespace-pre-line text-xs font-semibold text-white leading-relaxed font-sans prose prose-invert">
-                          {result}
-                        </div>
-                      ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-center opacity-40 p-5 space-y-3">
-                          <Compass className="h-9 w-9 text-cyan-300 animate-bounce" />
-                          <p className="text-blue-100 text-xs font-bold leading-normal">
-                            Chap tomondagi jadval maydonlarini to'ldiring va tahlil tugmasini bosing.
-                          </p>
-                        </div>
-                      )
+                  {/* Conversations Thread output box */}
+                  <div className="flex-grow overflow-y-auto pr-2 space-y-4 text-xs font-semibold leading-relaxed text-white text-left">
+                    {chatHistory.length === 0 ? (
+                      // Empty state
+                      <div className="h-full flex flex-col items-center justify-center text-center opacity-45 p-5 space-y-3 my-auto">
+                        <Compass className="h-9 w-9 text-cyan-300 animate-bounce" />
+                        <p className="text-blue-100 text-xs font-bold leading-normal">
+                          Chap tomondagi jadval maydonlarini to'ldiring va tahlil tugmasini bosing.
+                        </p>
+                      </div>
                     ) : (
-                      // Interactive chats display
+                      // Active chat dialogue boxes (User and AI)
                       <div className="space-y-4">
                         {chatHistory.map((msg, i) => (
                           <div 
@@ -921,20 +953,29 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                             className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                           >
                             <div 
-                              className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
+                              className={`max-w-[85%] rounded-[1.5rem] px-4 py-3.5 text-xs md:text-sm leading-relaxed ${
                                 msg.sender === 'user' 
-                                  ? 'bg-cyan-500/20 border border-cyan-400/30 text-white font-bold ml-auto' 
-                                  : 'bg-white/5 border border-white/5 text-blue-50 mr-auto whitespace-pre-line'
+                                  ? 'bg-blue-600 border border-blue-500 text-white font-extrabold ml-auto shadow-sm shadow-blue-900/10' 
+                                  : 'bg-slate-800 border border-slate-755 text-slate-100 mr-auto whitespace-pre-line font-bold'
                               }`}
                             >
-                              {msg.text}
+                              <div className={`text-[8px] uppercase tracking-wider font-mono font-black mb-1 ${
+                                msg.sender === 'user' ? 'text-blue-200' : 'text-cyan-400'
+                              }`}>
+                                {msg.sender === 'user' ? 'Siz kiritgan ma\'lumot' : 'AI Maslahatchi'}
+                              </div>
+                              <div className="prose prose-invert max-w-none text-xs md:text-sm leading-relaxed">
+                                {msg.text}
+                              </div>
                             </div>
                           </div>
                         ))}
+                        
                         {loading && (
                           <div className="flex justify-start animate-pulse">
-                            <span className="p-3 bg-white/5 border border-white/5 rounded-2xl text-[10px] uppercase font-mono tracking-wider">
-                              Sun'iy intellekt tahlili yozilmoqda...
+                            <span className="p-4 bg-slate-800 border border-slate-700 text-cyan-300 rounded-[1.5rem] text-[11px] font-bold font-mono tracking-wider flex items-center gap-2">
+                              <RefreshCw className="animate-spin h-3.5 w-3.5 text-cyan-400" />
+                              Sun'iy intellekt tahlil qilmoqda...
                             </span>
                           </div>
                         )}
@@ -942,23 +983,23 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                     )}
                   </div>
 
-                  {/* Form input messaging box at footer for chatbot mode */}
-                  {isInteractiveChat(selectedTool.key) && (
-                    <form onSubmit={executeAIRequest} className="mt-4 pt-3 border-t border-white/5 flex gap-2 shrink-0">
+                  {/* Continuous User Input form at footer */}
+                  {chatHistory.length > 0 && (
+                    <form onSubmit={executeAIRequest} className="mt-4 pt-4 border-t border-white/5 flex gap-2 shrink-0">
                       <input
                         type="text"
                         value={chatMessage}
                         disabled={loading}
                         onChange={(e) => setChatMessage(e.target.value)}
-                        className="flex-1 rounded-xl bg-white/5 border border-white/10 py-3 px-4 text-xs font-semibold text-white placeholder-blue-300/40 outline-none focus:border-cyan-400 transition"
-                        placeholder="Komissiyaga javob maktub yoki suhbatni kiriting..."
+                        className="flex-1 rounded-2xl bg-slate-950 border border-slate-800 py-3.5 px-4 text-xs font-semibold text-white placeholder-slate-500 outline-none focus:border-cyan-400 focus:bg-slate-900 transition-all font-semibold"
+                        placeholder="AI maslahatchiga savol bering yoki javob yozing..."
                       />
                       <button
                         type="submit"
                         disabled={loading || !chatMessage.trim()}
-                        className="p-3 rounded-xl bg-cyan-550/80 hover:bg-cyan-500 border border-white/10 font-bold text-white shadow-md active:scale-95 transition flex items-center justify-center cursor-pointer"
+                        className="p-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 border border-blue-500 font-extrabold text-white shadow-md active:scale-95 transition flex items-center justify-center cursor-pointer"
                       >
-                        <Send className="h-4 w-4" />
+                        <Send className="h-4.5 w-4.5" />
                       </button>
                     </form>
                   )}

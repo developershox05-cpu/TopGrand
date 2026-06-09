@@ -113,7 +113,7 @@ export default function Hero({ user, onOpenAuth, onLogout, onOpenPremium, active
   }, []);
 
   return (
-    <div className="relative overflow-hidden rounded-b-[2.5rem] border-b border-blue-900/40 bg-gradient-to-r from-blue-900 to-indigo-950 p-1 text-white shadow-xl shadow-blue-900/15 mb-6">
+    <div className="relative overflow-hidden rounded-b-[2.5rem] border-b border-sky-200 bg-gradient-to-r from-blue-800 to-indigo-900 p-1 text-white shadow-xl mb-6">
       {/* Background Animated Scenery Simulation */}
       <div className="absolute inset-0 z-0 opacity-40">
         <canvas ref={canvasRef} className="h-full w-full object-cover" />
@@ -124,84 +124,6 @@ export default function Hero({ user, onOpenAuth, onLogout, onOpenPremium, active
       <div className="absolute right-10 -bottom-10 h-80 w-80 rounded-full bg-cyan-400/20 blur-[130px]" />
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 md:py-10">
-        {/* TOP HEADER MENU */}
-        <header className="flex flex-col md:flex-row items-center justify-between gap-4 pb-8 mb-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 shadow-lg shadow-cyan-400/30 p-2 border border-white/20">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <span className="text-2xl font-black tracking-wider bg-gradient-to-r from-white via-blue-100 to-cyan-300 bg-clip-text text-transparent">
-                TopGrand
-              </span>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-cyan-400">Direct Admission</p>
-            </div>
-          </div>
-
-          {/* Navigation tabs inside header */}
-          <div className="flex flex-wrap items-center justify-center gap-1.5 rounded-2xl bg-white/5 p-1 border border-white/10 backdrop-blur-md">
-            {[
-              { id: 'all', label: 'Universitetlar' },
-              { id: 'ai', label: 'Chet elga Tayyorlov (AI)' },
-              { id: 'uz', label: 'O\'zbekiston (BMBA)' },
-              { id: 'apply', label: 'Topshirish' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md'
-                    : 'text-blue-100 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Hamkorlik Button */}
-            <button
-              onClick={() => setShowPartnerModal(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-blue-100 transition hover:bg-white/15 hover:border-cyan-400/50"
-              id="btn-hamkorlik-nav"
-            >
-              <Handshake className="h-4 w-4 text-cyan-400" />
-              <span>Hamkorlik</span>
-            </button>
-
-            {/* Loyalty and Auth Actions */}
-            <AnimatePresence mode="wait">
-              {user.isLoggedIn ? (
-                <div className="flex items-center gap-2.5 rounded-2xl bg-white/10 border border-white/15 px-3.5 py-1.5" id="user-profile-badge">
-                  <div className="flex h-7.5 w-7.5 items-center justify-center rounded-xl bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-                    <UserCheck className="h-4 w-4" />
-                  </div>
-                  <div className="text-left hidden sm:block">
-                    <p className="text-xs font-bold leading-tight text-white truncate max-w-[120px]">{user.name} {user.surname}</p>
-                  </div>
-                  <button
-                    onClick={onLogout}
-                    title="Chiqish"
-                    className="ml-1 text-blue-300 hover:text-red-400 transition"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={onOpenAuth}
-                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-400 hover:brightness-110 px-4.5 py-2 text-xs font-bold text-white shadow-lg shadow-blue-500/20"
-                  id="btn-top-login"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Kirish</span>
-                </button>
-              )}
-            </AnimatePresence>
-          </div>
-        </header>
 
         {/* HERO HERO SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center py-6">
@@ -249,7 +171,7 @@ export default function Hero({ user, onOpenAuth, onLogout, onOpenPremium, active
                 <span className="text-[10px] text-blue-200 uppercase tracking-widest leading-3 block mt-0.5">Top Davlatlar</span>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-md text-center lg:text-left">
-                <span className="block text-xl md:text-2xl font-extrabold text-cyan-300">14+</span>
+                <span className="block text-xl md:text-2xl font-extrabold text-cyan-300">30+</span>
                 <span className="text-[10px] text-blue-200 uppercase tracking-widest leading-3 block mt-0.5">Daxshat AI Modul</span>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-md text-center lg:text-left">

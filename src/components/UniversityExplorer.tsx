@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Award, Calendar, DollarSign, Globe, Lock, Unlock, FileText, CheckCircle, Flame, Star, Sparkles, Send, GraduationCap, ArrowUpRight, MessageSquare, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Award, Calendar, DollarSign, Globe, Lock, Unlock, FileText, CheckCircle, Flame, Star, Sparkles, Send, GraduationCap, ArrowUpRight, MessageSquare, ArrowRight, ArrowLeft } from 'lucide-react';
 import { University, User } from '../types';
 import { universitiesData } from '../data';
 import { motion, AnimatePresence } from 'motion/react';
@@ -17,7 +17,7 @@ export default function UniversityExplorer({ user, onOpenPremium }: UniversityEx
   const [showPartnerModal, setShowPartnerModal] = useState(false);
 
   // Special State for University detail interactive tabs & questions/chat bounds
-  const [modalSubTab, setModalSubTab] = useState<'info' | 'chat'>('info');
+  const [modalSubTab, setModalSubTab] = useState<'info' | 'steps' | 'chat'>('info');
   const [uniChatInput, setUniChatInput] = useState('');
   const [uniChatHistory, setUniChatHistory] = useState<Record<string, Array<{sender: 'user' | 'ai', text: string}>>>({});
   const [uniChatLoading, setUniChatLoading] = useState(false);
@@ -416,206 +416,436 @@ export default function UniversityExplorer({ user, onOpenPremium }: UniversityEx
         </div>
       )}
 
-      {/* UNIVERSITY DETAILS DIALOG / MODAL (Batafsil bo'limi) */}
+      {/* UNIVERSITY DETAILS FULL SCREEN OVERLAY (Batafsil bo'limi) */}
       <AnimatePresence>
-        {selectedUni && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-950/45 backdrop-blur-md p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-2xl overflow-hidden rounded-[2.5rem] border border-white/60 bg-white p-8 shadow-2xl backdrop-blur-xl text-slate-850 h-[85vh] flex flex-col"
-            >
-              <button
-                onClick={() => handleSelectUni(null)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 hover:bg-slate-100 p-1.5 rounded-full transition z-30"
-                id="btn-close-uni-detail"
-              >
-                <X className="h-5 w-5" />
-              </button>
+        {selectedUni && (() => {
+          const applyHelpSteps = [
+            ...(selectedUni.country === 'AQSh' ? [
+              {
+                badge: "Hujjat topshirish",
+                title: "1-Qadam: Common App portali va Account ochish",
+                desc: "AQShdagi deyarli barcha top universitetlar, jumladan shu oliygoh ham 'Common Application' portali orqali hujjat qabul qiladi. Portalda xalqaro talaba toifasida akkaunt ochib, profilingizni faollashtiring hamda ushbu universitetni 'My Colleges' tizimiga qo'shing."
+              },
+              {
+                badge: "Moliyaviy yordam",
+                title: "2-Qadam: CSS Profile formasini to'ldirish (100% BEPUL o'qish siri)",
+                desc: "Agar oilaviy o'rtacha daromadingiz yiliga $65,000 dan past bo'lsa, bu universitet oilasi muhtoj talabalarga to'liq bepul o'qish va yotoqxona (Full Need-Based Aid) taqdim etadi. Buni so'rash uchun College Board sayti orqali CSS Profile formasini batafsil to'ldirib, soliq va daromad guvohnomalarini ishonchli biriktirishingiz shart."
+              },
+              {
+                badge: "Imtihonlar",
+                title: "3-Qadam: SAT Digital va IELTS ballari",
+                desc: "Ushbu oliygoh uchun IELTS kamida 6.5 - 7.5 talab qilinadi. Shuningdek xalqaro raqobatda ustun bo'lish uchun SAT Digital imtihonida asosan Matematika va Ingliz tili qismlaridan kamida 1420+ ball to'plash tavsiya etiladi."
+              },
+              {
+                badge: "Insholar",
+                title: "4-Qadam: Shaxsiy insho (Personal Statement) va Why Us",
+                desc: "Komissiya sizning quruq ballaringizga emas, balki shaxsiyatingizga qaraydi. Global inshoni ingliz tilida 650 ta so'z oralig'ida yozing. Buning uchun 'THE CONTENT LAB' daxshatli AI modullarimiz yordamida 'Narrative Threader' va 'Hook' strategiyalaridan real foydalaning."
+              },
+              {
+                badge: "Tavsiyanoma",
+                title: "5-Qadam: Tavsiyalash va Maktab baholari transkripti",
+                desc: "Sinf rahbaringiz hamda Matematika/Ingliz tili fani o'qituvchilaridan jami 2-3 ta rasmiy ingliz tilida tavsiyanoma (Recommendation Letter) yuklang. Maktabning so'nggi 3 yildagi choraklik va yillik baholari baholanish transkriptini ilova qiling."
+              }
+            ] : selectedUni.country === 'Germaniya' ? [
+              {
+                badge: "Tizim",
+                title: "1-Qadam: Uni-assist portalidan ekvivalentlik tekshiruvi",
+                desc: "O'zbekistondagi 11 yillik umumiy maktab hujjati Germaniya uchun yetarli hisoblanmaydi (Studienkolleg talab qilinishi mumkin). Uni-assist tizimida attestatingiz nemis 'HZB' standartiga tenglashtirilish darajasini tekshirishingiz muhim poydevor hisoblanadi."
+              },
+              {
+                badge: "Viza kafolati",
+                title: "2-Qadam: Bloklangan bank hisobi (Blocked Account) ochish",
+                desc: "Germaniya elchixonasidan viza olish va yashash huquqini ta'minlash uchun nemis davlat banklarida (Expatrio, Fintiba) maxsus Bloklangan Hisob (Blocked Account) ochib, unga yiliga €11,900 miqdorida kafolatlangan pul o'tkazishingiz lozim."
+              },
+              {
+                badge: "Til darajasi",
+                title: "3-Qadam: Til sertifikatlarini biriktirish",
+                desc: "Nemis tili o'quv yo'nalishlari uchun TestDaF kamida TDN 4 darajasi (C1), ingliz tilidagi xalqaro bakalavriat va magistratalar uchun esa IELTS Academic kamida 6.0/6.5 darajallari joriy qilinadi."
+              },
+              {
+                badge: "Grantlar",
+                title: "4-Qadam: DAAD va Deutschlandstipendium bepul yashash stipendiyalari",
+                desc: "Germaniyada kontrakt to'lovi yo'q, o'qish bepul! Ammo turar-joy va yashashni ham tekin qilish uchun rasmiy DAAD tashkilotiga yoki oyiga €300 beradigan Deutschlandstipendium grantlariga hujjat berasiz."
+              }
+            ] : selectedUni.country === "Janubiy Koreya" ? [
+              {
+                badge: "GKS granti",
+                title: "1-Qadam: GKS (Global Korea Scholarship) To'liq Grant arizasi",
+                desc: "Koreyada 100% tekin o'qish, bepul yotoqxona va oyiga $900 oylik naqd mukofot olish uchun har yili fevral/sentyabr oylarida Global Koreya Granti (GKS) xizmatiga ariza bering. Buni elchixona yoki universitet orqali amalga oshirish mumkin."
+              },
+              {
+                badge: "Til ko'rsatkichi",
+                title: "2-Qadam: TOPIK yoki IELTS sertifikatlariga ega bo'lish",
+                desc: "Koreys tili yo'nalishi uchun TOPIK kamida 3-4 daraja, ingliz tili darslari (Global Bachelor/Mundus) uchun esa IELTS 5.5 - 6.5 yetarli. TOPIK sertifikati bo'lsa universitetlar 30% dan 100% gacha bevosita ichki kontrakt grantlarini ham beradi."
+              },
+              {
+                badge: "Apostil",
+                title: "3-Qadam: Guvohnomalar va baholarni Apostil (Apostille) qilish",
+                desc: "Koreya qonunlariga muvofiq, maktab attestatingiz va oilaviy munosabatlarni tasdiqlovchi FHDYo guvohnomalarini rasmiy notarial tarjima qildirib, Tashqi Ishlar Vazirligidan yoki Adliya Vazirligidan Apostil muhrlari bilan tasdiqlashingiz shart."
+              },
+              {
+                badge: "Moliya",
+                title: "4-Qadam: Viza uchun bankda $20,000 kafolat ko'rsatish",
+                desc: "Agar siz GKS granti sohibi bo'lmasangiz, Koreya elchixonasidan viza olish uchun bank hisobingizda uzluksiz kamida $20,500 pul turganligini isbotlovchi xalqaro Bank guvohnomasi taqdim qilinadi."
+              }
+            ] : selectedUni.country === "Xitoy" ? [
+              {
+                badge: "CSC portal",
+                title: "1-Qadam: Xitoy Hukumat Granti (CSC Scholarship) loyihasi",
+                desc: "Xitoyda bepul dars olish, tekin yotoqxona hamda har oy $450 - $550 oylik stipendiyaga ega bo'lish uchun CSC rasmiy portalida ariza fo'ldiring va universitetning 'Agency Number' kodini mantiqiy kiriting."
+              },
+              {
+                badge: "Salomatlik",
+                title: "2-Qadam: Foreigner Physical Examination ko'rik hujjati",
+                desc: "Xitoy elchixonasi talabiga asosan shifokor ko'rigidan o'tib, ingliz tildagi maxsus namunadagi 'Physical Examination' varag'ini rasm va muhrlar bilan rasmiylashtiring."
+              },
+              {
+                badge: "Sertifikatlar",
+                title: "3-Qadam: Sudlanmaganlik haqida ma'lumotnoma yuklash",
+                desc: "Yagona Elektron Portal (my.gov.uz) orqali yashash joyingiz bo'yicha sudlanmaganlik to'g'risida inglizcha QR-kodli guvohnoma olib, portalga integratsiyalang."
+              }
+            ] : [
+              {
+                badge: "Tanlov",
+                title: "1-Qadam: Oliygoh rasmiy ariza sahifasidagi talablarni o'rganish",
+                desc: "Universitetning rasmiy saytida 'Admissions -> International Students' sahifasiga kirib, aynan shu yo'nalishdagi so'nggi muddatlarni va kerakli portallarni ko'rib chiqing."
+              },
+              {
+                badge: "Baholar",
+                title: "2-Qadam: GPA va til ko'rsatkichlarini rasmiylashtirish",
+                desc: "Attestat yoki diplomni ingliz tiliga rasmiy tarjima qildiring, o'rtacha GPA ballaringizni baholab, IELTS Akademik sertifikatini biriktiring."
+              },
+              {
+                badge: "Maktub",
+                title: "3-Qadam: Motivatsion xat va tavsiyanoma draftlari",
+                desc: "Nega aynan ushbu oliygoh va mutaxassislikni tanlaganingiz haqida daxshatli motivatsion insho tayyorlab, sobiq professorlardan talabchan tavsiyanoma oling."
+              },
+              {
+                badge: "Intervyu",
+                title: "4-Qadam: Suhbat va viza hujjatlari poydevori",
+                desc: "Ariza tasdiqlangach, onlayn zoom intervyuga kirasiz. Keyin universitet taqdim etgan rasmiy elektron yo'llanma (masalan, I-20 yoki CAS) asosida talabalik vizasini rasmiylashtirasiz."
+              }
+            ])
+          ];
 
-              {/* Title & Badge */}
-              <div className="border-b border-slate-150 pb-4">
-                <div className="flex flex-wrap items-center gap-2 mb-2 pr-8">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 border border-blue-200 px-3 py-1 text-xs font-bold text-blue-700">
-                    Jahon Reytingi #{selectedUni.ranking}
-                  </span>
-                  <span className="flex items-center gap-1 text-sm text-slate-500 ml-auto font-semibold">
-                    <MapPin className="h-4 w-4 text-blue-600" />
-                    {selectedUni.city}, {selectedUni.country}
-                  </span>
-                </div>
+          return (
+            <div className="fixed inset-0 z-50 bg-[#f0f9ff] text-slate-900 flex flex-col h-screen w-screen overflow-hidden" id="uni-fullscreen-panel">
+              
+              {/* FIXED HIGH CONTRAST HEADER WITH BOLD BACK BUTTON AND EXIT CONTROL */}
+              <div className="sticky top-0 bg-white border-b border-blue-100 px-6 py-4 flex items-center justify-between z-30 shadow-md shrink-0">
+                <button
+                  onClick={() => handleSelectUni(null)}
+                  className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-extrabold text-xs md:text-sm shadow-sm transition-all active:scale-95 cursor-pointer"
+                  id="btn-close-uni-detail-fullscreen"
+                >
+                  <ArrowLeft className="h-5 w-5 text-blue-700 stroke-[3px]" />
+                  <span>Orqaga Qaytish</span>
+                </button>
 
-                <div className="flex items-center justify-between gap-4">
-                  <h2 className="text-xl md:text-2xl font-black text-blue-950 leading-tight">
-                    {selectedUni.name}
-                  </h2>
+                <div className="flex items-center gap-3">
+                  <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-blue-100 border border-blue-200 px-3.5 py-1 text-xs font-black text-blue-800">
+                    QS Rank: #{selectedUni.ranking}
+                  </span>
+                  
                   <button
                     onClick={() => toggleFavorite(selectedUni.id)}
-                    className={`p-2.5 rounded-xl border transition shrink-0 ${
+                    className={`p-3 rounded-2xl border transition-all cursor-pointer ${
                       favorites.includes(selectedUni.id)
-                        ? 'bg-yellow-50 border-yellow-250 text-yellow-500'
-                        : 'bg-slate-50 border-slate-100 text-slate-400 hover:bg-slate-100'
+                        ? 'bg-yellow-50 border-yellow-200 text-yellow-500'
+                        : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-100'
                     }`}
                   >
-                    <Star className={`h-4.5 w-4.5 ${favorites.includes(selectedUni.id) ? 'fill-yellow-400 text-yellow-500' : ''}`} />
+                    <Star className={`h-5 w-5 ${favorites.includes(selectedUni.id) ? 'fill-yellow-400 text-yellow-500' : 'text-slate-400'}`} />
                   </button>
                 </div>
               </div>
 
-              {/* Interactive Modal Subtabs layout */}
-              <div className="flex border-b border-slate-100 mb-4 bg-slate-50 p-1 rounded-xl">
-                <button
-                  onClick={() => setModalSubTab('info')}
-                  className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition ${
-                    modalSubTab === 'info'
-                      ? 'bg-white text-blue-700 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  Oliygoh Haqida
-                </button>
-                <button
-                  onClick={() => setModalSubTab('chat')}
-                  className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 ${
-                    modalSubTab === 'chat'
-                      ? 'bg-white text-blue-700 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-cyan-500 shrink-0" />
-                  <span>AI Maslahatchi Chat ({5 - (user.isPremium ? 0 : uniQuestionsCount)} bepul)</span>
-                </button>
-              </div>
+              {/* OVERALL PORTAL LAYOUT GRID */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
+                
+                {/* UNIVERSITY TITLE HERO CONTAINER */}
+                <div className="bg-gradient-to-br from-blue-950 to-indigo-950 rounded-[2.5rem] p-6 md:p-10 text-white shadow-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-blue-500/10 blur-3xl" />
+                  
+                  <div className="relative z-10 space-y-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="bg-white/10 border border-white/20 text-cyan-200 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider font-mono">
+                        {selectedUni.country} • {selectedUni.city}
+                      </span>
+                      <span className="bg-cyan-500/20 border border-cyan-400/30 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider font-mono">
+                        Reyting: #{selectedUni.ranking}
+                      </span>
+                    </div>
 
-              {/* Content Space with scrollbar */}
-              <div className="flex-grow overflow-y-auto pr-2 space-y-5">
-                {modalSubTab === 'info' ? (
-                  <>
-                    <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-semibold">
-                      {selectedUni.description}
+                    <h1 className="text-2xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                      {selectedUni.name}
+                    </h1>
+
+                    <p className="text-xs md:text-sm text-cyan-100/85 leading-relaxed max-w-4xl font-medium">
+                      {selectedUni.brief}
                     </p>
-
-                    {/* Requirements & Documents section */}
-                    <div className="rounded-2xl border border-blue-100 bg-[#f8fafc] p-4 space-y-3">
-                      <h4 className="font-extrabold text-xs text-blue-900 flex items-center gap-1.5">
-                        <FileText className="h-4 w-4 text-blue-600" />
-                        <span>Qabul Uchun Hujjatlar</span>
-                      </h4>
-                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 font-semibold">
-                        {selectedUni.documents.map((doc, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
-                            <span>{doc}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Financial and deadlines segment */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="rounded-2xl border border-blue-105 bg-[#f8fafc] p-3.5 flex items-start gap-3">
-                        <DollarSign className="h-4.5 w-4.5 text-blue-600 shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kontrakt To'lovi</h4>
-                          <p className="text-xs text-blue-950 font-black mt-1 leading-normal">{selectedUni.fee}</p>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-blue-105 bg-[#f8fafc] p-3.5 flex items-start gap-3">
-                        <Calendar className="h-4.5 w-4.5 text-blue-600 shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Topshirish Muddatlari</h4>
-                          <p className="text-xs text-blue-950 font-black mt-1 leading-normal">{selectedUni.deadlines}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  /* INTERACTIVE AI CHAT VIEW */
-                  <div className="flex flex-col h-full min-h-[300px]">
-                    <div className="flex-grow overflow-y-auto p-3 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-200 space-y-3 max-h-[310px] overflow-x-hidden shadow-inner">
-                      {/* Initial Greetings bubble */}
-                      <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-850 text-cyan-300">
-                        <p className="font-extrabold flex items-center gap-1.5 mb-1 text-white">
-                          <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
-                          <span>{selectedUni.name} AI Vakili</span>
-                        </p>
-                        <p className="font-light leading-relaxed">
-                          Assalomu alaykum! Men {selectedUni.name} universitetining rasmiy AI konsultantiman. Sizga oliygoh haqida, grantlar, topshirish talablari va o'qish shartlari haqida 100% real, rasmiy va ishonchli malumotlarni bera olaman. Savelaringizni bering!
-                        </p>
-                      </div>
-
-                      {/* Chat History mapped */}
-                      {(uniChatHistory[selectedUni.id] || []).map((msg, i) => (
-                        <div key={i} className={`p-3 rounded-2xl max-w-[85%] ${
-                          msg.sender === 'user'
-                            ? 'bg-blue-600 text-white ml-auto border border-blue-500'
-                            : 'bg-slate-950 border border-slate-850 text-slate-205 mr-auto'
-                        }`}>
-                          <p className="font-black text-[10px] uppercase tracking-wider text-cyan-405 mb-0.5">
-                            {msg.sender === 'user' ? 'Siz' : 'AI Consultant'}
-                          </p>
-                          <p className="font-medium whitespace-pre-line leading-relaxed text-[11px] md:text-xs">{msg.text}</p>
-                        </div>
-                      ))}
-
-                      {uniChatLoading && (
-                        <div className="mr-auto p-3 rounded-2xl bg-slate-955 border border-slate-850 flex items-center gap-2">
-                          <svg className="animate-spin h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                          <span className="text-[11px] text-cyan-400 font-bold">Rasmiy ma'lumotlar olinmoqda...</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Question Input Form inside modal */}
-                    <form onSubmit={sendUniChatMessage} className="mt-3 flex gap-2">
-                      <input
-                        type="text"
-                        value={uniChatInput}
-                        onChange={(e) => setUniChatInput(e.target.value)}
-                        placeholder={`${selectedUni.name} haqida savol bering (Masalan: Kontrakt bahosi nima?) ...`}
-                        className="flex-grow bg-slate-900 text-white placeholder-slate-500 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:border-cyan-400 transition"
-                      />
-                      <button
-                        type="submit"
-                        disabled={uniChatLoading || !uniChatInput.trim()}
-                        className="px-4 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold transition flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-40"
-                      >
-                        <Send className="h-4 w-4" />
-                      </button>
-                    </form>
                   </div>
-                )}
+                </div>
+
+                {/* MODAL NAVIGATION SUBTABS BAR */}
+                <div className="flex border border-blue-200/60 bg-white p-1.5 rounded-[1.75rem] shadow-sm max-w-2xl mx-auto shrink-0">
+                  <button
+                    onClick={() => setModalSubTab('info')}
+                    className={`flex-1 py-3 text-center text-xs md:text-sm font-black rounded-2xl transition-all duration-200 uppercase tracking-widest cursor-pointer ${
+                      modalSubTab === 'info'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-slate-600 hover:text-blue-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    Oliygoh haqida
+                  </button>
+
+                  <button
+                    onClick={() => setModalSubTab('steps')}
+                    className={`flex-1 py-3 text-center text-xs md:text-sm font-black rounded-2xl transition-all duration-200 uppercase tracking-widest cursor-pointer ${
+                      modalSubTab === 'steps'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-slate-600 hover:text-blue-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    0-dan Qabul Yo'li 🧭
+                  </button>
+
+                  <button
+                    onClick={() => setModalSubTab('chat')}
+                    className={`flex-1 py-3 text-center text-xs md:text-sm font-black rounded-2xl transition-all duration-200 uppercase tracking-widest cursor-pointer flex items-center justify-center gap-1.5 ${
+                      modalSubTab === 'chat'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-slate-600 hover:text-blue-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />
+                    <span>AI Maslahatchi</span>
+                  </button>
+                </div>
+
+                {/* TAB SWITCH CONTENTS */}
+                <div className="bg-white rounded-[2.5rem] border border-blue-100/60 p-6 md:p-8 shadow-xl shadow-blue-900/[0.02]">
+                  
+                  {modalSubTab === 'info' && (
+                    <div className="space-y-8">
+                      <div className="space-y-3 text-left">
+                        <h3 className="text-lg md:text-xl font-extrabold text-blue-950">
+                          Batafsil ma'lumotlar va statistikalar
+                        </h3>
+                        <p className="text-xs md:text-sm text-slate-800 leading-relaxed font-semibold">
+                          {selectedUni.description}
+                        </p>
+                      </div>
+
+                      {/* Financial Metrics and Deadlines details */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        
+                        <div className="rounded-3xl border border-blue-100 bg-[#f8fafc] p-6 flex items-start gap-4 shadow-sm">
+                          <div className="p-3 bg-blue-100 border border-blue-200 text-blue-700 rounded-2xl shrink-0">
+                            <DollarSign className="h-6 w-6 stroke-[2.5px]" />
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Yillik Kontrakt va Grantlar</h4>
+                            <p className="text-xs md:text-sm text-blue-950 font-black leading-snug">
+                              {selectedUni.fee}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-3xl border border-blue-100 bg-[#f8fafc] p-6 flex items-start gap-4 shadow-sm">
+                          <div className="p-3 bg-blue-100 border border-blue-200 text-blue-700 rounded-2xl shrink-0">
+                            <Calendar className="h-6 w-6 stroke-[2.5px]" />
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Ariza topshirish oxirgi muddatlari (Deadlines)</h4>
+                            <p className="text-xs md:text-sm text-blue-950 font-black leading-snug">
+                              {selectedUni.deadlines}
+                            </p>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Required Documents checklist for Admissions */}
+                      <div className="rounded-3xl border border-blue-100 bg-[#f8fafc] p-6 md:p-8 space-y-4">
+                        <h4 className="font-extrabold text-sm md:text-base text-blue-950 flex items-center gap-2">
+                          <FileText className="h-5 w-5 text-blue-700 shrink-0" />
+                          <span>Qabul komissiyasiga talab qilinadigan hujjatlar:</span>
+                        </h4>
+                        
+                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs md:text-sm text-slate-800 font-bold">
+                          {selectedUni.documents.map((doc, i) => (
+                            <li key={i} className="flex items-start gap-3">
+                              <CheckCircle className="h-4.5 w-4.5 text-green-600 shrink-0 mt-0.5" />
+                              <span>{doc}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                    </div>
+                  )}
+
+                  {modalSubTab === 'steps' && (
+                    <div className="space-y-6">
+                      <div className="border-b border-slate-100 pb-4 text-left">
+                        <h3 className="text-lg md:text-xl font-extrabold text-blue-950">
+                          {selectedUni.country}da O'qishga Kirishning 0-dan Batafsil Yo'riqnomasi 🧭
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-1 font-semibold">
+                          Ushbu qavatda aynan {selectedUni.name} oliygohi joylashgan mamlakatning rasmiy va real o'qish qoidalari ketma-ketlikda tushuntiriladi.
+                        </p>
+                      </div>
+
+                      <div className="relative border-l-2 border-blue-100 pl-6 ml-4 space-y-8">
+                        {applyHelpSteps.map((step, sIdx) => (
+                          <div key={sIdx} className="relative text-left">
+                            
+                            {/* Number Indicator Pill */}
+                            <span className="absolute -left-[37px] top-1 flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 border-2 border-white text-white text-[10px] font-black shadow-sm font-mono z-10">
+                              {sIdx + 1}
+                            </span>
+
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="text-sm md:text-base font-black text-blue-950 leading-snug">
+                                  {step.title}
+                                </h4>
+                                <span className="bg-blue-50 border border-blue-150 text-blue-800 text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                  {step.badge}
+                                </span>
+                              </div>
+                              <p className="text-xs md:text-sm text-slate-700 leading-relaxed font-semibold">
+                                {step.desc}
+                              </p>
+                            </div>
+
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs md:text-sm text-amber-800 font-bold leading-normal text-left">
+                        ⚠️ **Eslatma**: Ushbu yo'llanmalar TopGrand akademik kengashi tomonidan so'nggi qabul hisobotlaridan mustaqil yig'ilgan real shablonlar hisoblanadi. Har bir hujjat va esse xatlarini topshirishdan oldin rasmiy veb-saytdan tekshirish tavsiya etiladi.
+                      </div>
+                    </div>
+                  )}
+
+                  {modalSubTab === 'chat' && (
+                    /* INTERACTIVE AI CHAT COUNSELOR */
+                    <div className="flex flex-col h-full min-h-[400px]">
+                      
+                      <div className="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center text-left">
+                        <div>
+                          <h3 className="text-base font-extrabold text-blue-950 flex items-center gap-1.5">
+                            <Sparkles className="h-4.5 w-4.5 text-cyan-600" />
+                            <span>{selectedUni.name} Rasmiy AI Vakili</span>
+                          </h3>
+                          <p className="text-[10px] text-slate-500 font-semibold font-mono">
+                            OFFICIAL ACADEMIC COGNITIVE CONSOLE
+                          </p>
+                        </div>
+
+                        <span className="bg-blue-50 text-blue-800 text-[10px] font-black px-3 py-1 rounded-full border border-blue-100">
+                          Limit remaining: {5 - (user.isPremium ? 0 : uniQuestionsCount)} / 5
+                        </span>
+                      </div>
+
+                      {/* Scrollable conversation logs */}
+                      <div className="flex-1 overflow-y-auto p-4 md:p-6 rounded-3xl bg-slate-50 border border-blue-100/50 text-xs text-slate-800 space-y-4 max-h-[380px] overflow-x-hidden shadow-inner text-left">
+                        
+                        {/* Initial Greeting message bubble */}
+                        <div className="p-4 rounded-[1.5rem] bg-white border border-blue-100 text-slate-800 shadow-sm max-w-[90%] md:max-w-[80%]">
+                          <p className="font-extrabold flex items-center gap-1.5 mb-1 text-blue-900 text-xs">
+                            <Sparkles className="h-4 w-4 text-blue-600" />
+                            <span>{selectedUni.name} AI Maslahatchisi</span>
+                          </p>
+                          <p className="font-semibold leading-relaxed text-xs md:text-sm text-slate-700">
+                            Assalomu alaykum, muhtaram talaba! Men {selectedUni.name} universitetining rasmiy sun'iy intellekt vakili hamda qabul suhbatdoshiman. Sizga oliygohdagi grant imkoniyatlari, viza qoidalari, yashash sharoitlari yoki ariza topshirish sirlari haqida 100% haqiqiy tahliliy javob beraman.
+                          </p>
+                        </div>
+
+                        {/* Real Conversation history */}
+                        {(uniChatHistory[selectedUni.id] || []).map((msg, i) => (
+                          <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`p-4 rounded-[1.5rem] max-w-[85%] md:max-w-[75%] shadow-sm ${
+                              msg.sender === 'user'
+                                ? 'bg-blue-600 text-white ml-auto border border-blue-500 font-extrabold'
+                                : 'bg-white border border-blue-100 text-slate-900 mr-auto font-bold'
+                            }`}>
+                              <p className={`font-black text-[9px] uppercase tracking-wider mb-1 ${
+                                msg.sender === 'user' ? 'text-blue-200' : 'text-blue-800'
+                              }`}>
+                                {msg.sender === 'user' ? 'Siz' : 'AI Maslahatchi'}
+                              </p>
+                              <p className="whitespace-pre-line leading-relaxed text-xs md:text-sm">{msg.text}</p>
+                            </div>
+                          </div>
+                        ))}
+
+                        {uniChatLoading && (
+                          <div className="flex justify-start animate-pulse">
+                            <div className="bg-white border border-blue-100 p-4 rounded-3xl flex items-center gap-2.5 shadow-sm">
+                              <svg className="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                              <span className="text-xs text-blue-800 font-black">AI ma'lumotlarni tahlil qilmoqda...</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Chat interactive input bar */}
+                      <form onSubmit={sendUniChatMessage} className="mt-4 flex gap-2 shrink-0">
+                        <input
+                          type="text"
+                          value={uniChatInput}
+                          onChange={(e) => setUniChatInput(e.target.value)}
+                          placeholder={`${selectedUni.name} haqida savol bering (Masalan: SAT ballisiz qabul bormi?) ...`}
+                          className="flex-grow bg-slate-50 text-slate-900 placeholder-slate-400 border border-slate-200 rounded-2xl px-4 py-3.5 text-xs md:text-sm outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm font-semibold"
+                        />
+                        <button
+                          type="submit"
+                          disabled={uniChatLoading || !uniChatInput.trim()}
+                          className="px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-all flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-40 shadow-md shadow-blue-600/10"
+                        >
+                          <Send className="h-4.5 w-4.5" />
+                        </button>
+                      </form>
+
+                    </div>
+                  )}
+
+                </div>
+
+                {/* IMMUTABLE ACADEMIC CALL TO ACTIONS */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 justify-between border-t border-blue-105 pt-6 pb-12">
+                  <a
+                    href={selectedUni.website}
+                    target="_blank"
+                    rel="referrer noopener"
+                    className="flex items-center gap-1.5 text-xs md:text-sm text-blue-700 font-extrabold hover:underline"
+                  >
+                    <Globe className="h-4.5 w-4.5 text-blue-600" />
+                    <span>Rasmiy OTM Veb-Sayti: {selectedUni.website.replace("https://www.", "")}</span>
+                  </a>
+
+                  <a
+                    href={selectedUni.website}
+                    target="_blank"
+                    rel="referrer noopener"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-700 to-indigo-600 hover:scale-[1.01] transition-all px-6 py-3.5 text-xs md:text-sm font-black text-white shadow-lg shadow-blue-900/15 cursor-pointer"
+                  >
+                    Oliygoh Saytida Online Ariza Topshirish <ArrowUpRight className="h-4.5 w-4.5 text-white" />
+                  </a>
+                </div>
+
               </div>
 
-              {/* Immutable Universal Footer containing actions (Direct Official Redirect) */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 justify-between border-t border-slate-100 pt-4 mt-4">
-                <a
-                  href={selectedUni.website}
-                  target="_blank"
-                  rel="referrer noopener"
-                  className="flex items-center gap-1.5 text-xs text-blue-600 font-bold hover:underline"
-                >
-                  <Globe className="h-4 w-4" />
-                  <span>Rasmiy Veb-Sayt: {selectedUni.website.replace("https://www.", "")}</span>
-                </a>
-
-                <a
-                  href={selectedUni.website}
-                  target="_blank"
-                  rel="referrer noopener"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 px-5 py-2.5 text-xs font-black text-white transition hover:brightness-110 active:scale-95 shadow-lg shadow-blue-500/20"
-                >
-                  Oliygoh Saytida Ariza Topshirish <ArrowUpRight className="h-4 w-4" />
-                </a>
-              </div>
-            </motion.div>
-          </div>
-        )}
+            </div>
+          );
+        })()}
       </AnimatePresence>
 
       {/* SUBMIT HAMKORLIK TO LOCAL POPUP */}
