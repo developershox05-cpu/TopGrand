@@ -39,6 +39,343 @@ interface FormField {
 }
 
 export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdateUsage, onToggleFullScreen, currentLang = 'uz' }: AIPrepCenterProps) {
+  // LANGUAGE LOCALIZATION AND COGNITIVE TRANSCRIPTION DICTIONARIES
+  const l10n = {
+    uz: {
+      backToCatalog: "Katalogga qaytish",
+      activeSession: "MULOQOT FAOL",
+      tipTitle: "Tahlil yakunlandi!",
+      tipDesc: "Navbatdagi savollaringizni muloqot oynasida bemalol bering.",
+      restartBtn: "Muloqotni qayta boshlash",
+      placeholderMsg: "Savolingiz yoki xabaringizni yozing...",
+      yourInput: "Siz kiritgan ma'lumot",
+      aiAdviser: "AI Maslahatchi",
+      analyzing: "AI Tahlil qilmoqda...",
+      btnAction: "AI Tahlilini olish ⚡",
+      formAnalyzing: "Komissiya tahlil qilmoqda...",
+      activeToolsCount: "30 ta Daxshatli AI Funksiya",
+      limitText: "Limit"
+    },
+    en: {
+      backToCatalog: "Back to Catalog",
+      activeSession: "SESSION ACTIVE",
+      tipTitle: "Analysis Complete!",
+      tipDesc: "Feel free to ask any follow-up questions directly in the chat.",
+      restartBtn: "Restart Conversation",
+      placeholderMsg: "Write your question or message here...",
+      yourInput: "Your Input",
+      aiAdviser: "AI Advisor",
+      analyzing: "AI Analyzing...",
+      btnAction: "Get AI Analysis ⚡",
+      formAnalyzing: "Faculty board examining info...",
+      activeToolsCount: "30 Epic AI Tools",
+      limitText: "Limit"
+    },
+    ru: {
+      backToCatalog: "Назад к каталогу",
+      activeSession: "ДИАЛОГ АКТИВЕН",
+      tipTitle: "Анализ завершен!",
+      tipDesc: "Вы можете свободно задавать следующие вопросы в чате.",
+      restartBtn: "Начать диалог сначала",
+      placeholderMsg: "Напишите ваш вопрос или сообщение...",
+      yourInput: "Введенные данные",
+      aiAdviser: "ИИ-Консультант",
+      analyzing: "ИИ анализирует...",
+      btnAction: "Получить ИИ-Анализ ⚡",
+      formAnalyzing: "Приемная комиссия анализирует...",
+      activeToolsCount: "30 Крутых ИИ-Модулей",
+      limitText: "Лимит"
+    }
+  };
+
+  const getToolTitle = (key: string, defaultTitle: string) => {
+    if (currentLang === 'uz') return defaultTitle;
+    const titles: Record<string, Record<'en' | 'ru', string>> = {
+      university_vibe_matcher: { en: "University Vibe Matcher", ru: "Поиск атмосферы вуза" },
+      admission_officer_persona: { en: "Admission Officer Persona", ru: "Имитация сотрудника приемной" },
+      trend_predictor: { en: "Trend Predictor", ru: "Прогнозирование трендов" },
+      acceptance_rate_hacker: { en: "Acceptance Rate Hacker", ru: "Центральноазиатский шанс" },
+      hidden_major_finder: { en: "Hidden Major Finder", ru: "Поиск скрытых специальностей" },
+      safety_reach_matrix: { en: "Safety vs Reach Matrix", ru: "Матрица шансов" },
+      financial_aid_sniper: { en: "Financial Aid Sniper", ru: "Анализатор финансовой помощи" },
+      waitlist_escape_plan: { en: "Waitlist Escape Plan", ru: "Выход из листа ожидания" },
+      emotional_arc_analyzer: { en: "Emotional Arc Analyzer", ru: "Анализатор эмоций эссе" },
+      hook_generator: { en: "Essay Hook Generator", ru: "Генератор цепляющих вступлений" },
+      cultural_sensitivity: { en: "Western Cultural Sensitizer", ru: "Западный культурный сенсибилизатор" },
+      why_us_architect: { en: "Why Us Essay Architect", ru: "Архитектор эссе 'Почему мы'" },
+      narrative_threader: { en: "Narrative Threader", ru: "Связующий повествователь" },
+      vocabulary_punch: { en: "Vocabulary Punch Editor", ru: "Редактор лексического арсенала" },
+      cliche_detector: { en: "Cliché & Plagiarism Detector", ru: "Детектор клише и плагиата" },
+      tone_shifter: { en: "Essay Tone Shift Editor", ru: "Редактор тона эссе" },
+      blind_interviewer: { en: "Blind Admission Interviewer", ru: "Слепой приемный интервьюер" },
+      stump_questioner: { en: "Stump Questioner Master", ru: "Мастер каверзных вопросов" },
+      body_language_text: { en: "Textual Behavior & Tone", ru: "Текстовое поведение и тон" },
+      scholarship_panel: { en: "Scholarship Panel Simulator", ru: "Симулятор грантовой комиссии" },
+      thank_you_sniper: { en: "Thank You Note Sniper", ru: "Снайпер писем благодарности" },
+      group_discussion_leader: { en: "Group Discussion Leader", ru: "Лидер групповой дискуссии" },
+      job_market_matcher: { en: "Global Job Market Matcher", ru: "Анализатор рынка труда" },
+      roi_calculator: { en: "Academic ROI Calculator", ru: "Калькулятор окупаемости вуза" },
+      alumni_bio_scraper: { en: "Alumni Insights Roadmap", ru: "Инструкции по пути выпускников" },
+      visa_policy_advisor: { en: "Visa & Post-Grad Advisor", ru: "Советник по визам и OPT" },
+      networking_script: { en: "LinkedIn Sniper Scripts", ru: "LinkedIn Скрипты связи" },
+      startup_potential: { en: "Startup Incubator Selector", ru: "Инкубатор стартапов вуза" },
+      skill_bridge: { en: "Enterprise Skill Bridge", ru: "Мост профессиональных навыков" },
+      mental_health_guardian: { en: "Mental Health Guardian", ru: "Страж ментального здоровья" },
+    };
+    return titles[key]?.[currentLang] || defaultTitle;
+  };
+
+  const getToolDescription = (key: string, defaultDesc: string) => {
+    if (currentLang === 'uz') return defaultDesc;
+    const descs: Record<string, Record<'en' | 'ru', string>> = {
+      university_vibe_matcher: {
+        en: "Analyzes matching university environments (conservative, liberal, party-oriented) based on your personality.",
+        ru: "Анализирует наиболее подходящую атмосферу вуза (консервативную, либеральную, тусовочную) по вашему характеру."
+      },
+      admission_officer_persona: {
+        en: "Acts as a strict admissions officer and directly details all the gaps and weaknesses in your application.",
+        ru: "Имитирует строгого члена приемной комиссии и жестко указывает на все уязвимости вашей анкеты."
+      },
+      trend_predictor: {
+        en: "Predicts paths with the highest scholarship chances based on the last 2 years of global academic trends.",
+        ru: "Прогнозирует, на каких направлениях будет больше всего грантов на основе трендов последних двух лет."
+      },
+      acceptance_rate_hacker: {
+        en: "Calculates the real admissions rates specifically for Central Asian students, not just the general average.",
+        ru: "Рассчитывает реальные шансы на поступление именно для студентов из Центральной Азии."
+      },
+      hidden_major_finder: {
+        en: "Recommends highly prospective secret/niche majors instead of hyper-competitive traditional branches.",
+        ru: "Помогает найти скрытые перспективные специальности вместо высококонкурентных стандартных направлений."
+      },
+      safety_reach_matrix: {
+        en: "Categorizes your target universities into 'Guaranteed', 'Possible', and 'Miracle Required' tiers.",
+        ru: "Красиво делит выбранные вузы по категориям: 'Точно поступит', 'Есть шанс', 'Нужно чудо'."
+      },
+      financial_aid_sniper: {
+        en: "Detects university financial reserves and estimates likelihood of full need-based grant awards this season.",
+        ru: "Определяет финансовые резервы каждого университета и ваши шансы получить его гранты."
+      },
+      waitlist_escape_plan: {
+        en: "Writes a captivating Love Letter (LOCI) to help you instantly escape the waitlist and secure admission.",
+        ru: "Составляет мощное сопроводительное письмо (LOCI), чтобы помочь выйти из листа ожидания."
+      },
+      emotional_arc_analyzer: {
+        en: "Analyzes essay flow, highlights boring sentences, and maps your essay's psychological emotional curve.",
+        ru: "Оценивает эмоциональный накал, находит скучные моменты и моделирует карту эмпатии вашего эссе."
+      },
+      hook_generator: {
+        en: "Re-creates your statement's introductory hook to immediately capture admission officers' attention like a magnet.",
+        ru: "Превращает скучные первые предложения эссе в завораживающее вступление, от которого невозможно оторваться."
+      },
+      cultural_sensitivity: {
+        en: "Analyzes Western cultural tone-checks, flags subtle offensive phrasing, and aligns logic with modern campus values.",
+        ru: "Анализирует соответствие текста западной культуре и ценностям кампуса, убирая любые неуместные намеки."
+      },
+      why_us_architect: {
+        en: "Links your specific profile to actual unique labs, clubs, and professors of the target campus for the perfect Why Us essay.",
+        ru: "Связывает ваш профиль с реальными ресурсами, лабораториями и профессорами для идеального эссе 'Почему мы'."
+      },
+      narrative_threader: {
+        en: "Transforms a simple personal struggle or memory into a highly coherent story linked directly to your career aims.",
+        ru: "Превращает простую личную историю из вашей жизни в связную и трогательную нить мотивации."
+      },
+      vocabulary_punch: {
+        en: "Upgrades basic daily verbs and terms in your drafts into scholarly, powerful vocabulary that impresses professors.",
+        ru: "Повышает лексический уровень вашего письма, заменяя простые слова на сильный научный лексикон."
+      },
+      cliche_detector: {
+        en: "Flags passive clichés 'Since my childhood...' and provides highly unique alternatives to stand out.",
+        ru: "Выявляет все банальные шаблоны и заменяет их оригинальными, яркими идеями."
+      },
+      tone_shifter: {
+        en: "Dramatically shifts your statement's tone to make it sound highly 'Leader-like', 'Scientific', or 'Humble'.",
+        ru: "Быстро перестраивает стилистику мотивационного письма под лидерский, научный или скромный формат."
+      },
+      blind_interviewer: {
+        en: "Simulates an intensive interview with an examiner who aggressively critiques unsupported claims or hesitation.",
+        ru: "Интенсивный тренажер собеседования, жестко критикующий ваши аргументы и неуверенность."
+      },
+      stump_questioner: {
+        en: "Teaches you tactical secrets on how to handle the most complex brain-teasers and tricky logic requests.",
+        ru: "Учит вас тактическим секретам ответов на самые непредсказуемые и каверзные вопросы интервью."
+      },
+      body_language_text: {
+        en: "Spots anxiety, self-doubt, or over-preparedness gaps simply by analyzing your written/spoken phrasing.",
+        ru: "Выявляет скрытую тревогу, сомнения или заученность просто по характеру построения ваших фраз."
+      },
+      scholarship_panel: {
+        en: "Simulates a panel of 3 admissions authorities (Strict Professor, Major Donor, Community Leader).",
+        ru: "Симулирует комитет из 3 разных личностей (Академик, Спонсор, Лидер), давая разносторонние вопросы."
+      },
+      thank_you_sniper: {
+        en: "Generates custom follow-up thank you emails referencing actual discussion points with zero clichés.",
+        ru: "Создает уникальные, бесшаблонные благодарственные письма после интервью, цепляющие профессора."
+      },
+      group_discussion_leader: {
+        en: "Advises on diplomatic hacks to lead group tasks, share ideas cleanly, and stand out in peer groups.",
+        ru: "Показывает хитрые дипломатические приемы для лидерства в групповых созвонах и кейсах."
+      },
+      job_market_matcher: {
+        en: "Correlates your target major to live corporate expectations from tech giants to match career readiness.",
+        ru: "Анализирует реальный спрос технологических гигантов на специалистов вашей дисциплины."
+      },
+      roi_calculator: {
+        en: "Calculates total tuition investments and estimates payback periods based on average global graduate salaries.",
+        ru: "Сравнивает расходы на обучение и период окупаемости на основе рыночных зарплат."
+      },
+      alumni_bio_scraper: {
+        en: "Maps a structured postgraduate growth journey from successful alumni files who took your specific degree.",
+        ru: "Моделирует структурированную дорожную карту карьеры по успешным стопам выдающихся выпускников."
+      },
+      visa_policy_advisor: {
+        en: "Updates on work visas, OPT paths, H1-B application policies, and latest immigration regulations.",
+        ru: "Детализирует правила рабочей визы, периодов OPT и новых иммиграционных ограничений после вуза."
+      },
+      networking_script: {
+        en: "Generates laser-focused messages to connect with alumni and professors for organic referral requests.",
+        ru: "Пишет броские и лаконичные сообщения для связи с выпускниками на LinkedIn по поводу рекомендаций."
+      },
+      startup_potential: {
+        en: "Identifies pitching scripts and strategies to submit your idea to university accelerators and incubator programs.",
+        ru: "Определяет стратегии питчинга идеи для включения в университетские инкубаторы и акселераторы."
+      },
+      skill_bridge: {
+        en: "Highlights essential technical certificates and hot in-demand tools that are omitted in universities.",
+        ru: "Показывает редкие технические сертификаты и горячие навыки, о которых забывают в университетах."
+      },
+      mental_health_guardian: {
+        en: "Provides tools to counter academic fatigue, stress, and imposter syndrome without dropping grades.",
+        ru: "Рассказывает секреты борьбы с выгоранием, стрессового давления в общежитиях и синдрома самозванца."
+      }
+    };
+    return descs[key]?.[currentLang] || defaultDesc;
+  };
+
+  const getFieldLabel = (id: string, defaultLabel: string) => {
+    if (currentLang === 'uz') return defaultLabel;
+    const translations: Record<string, Record<'en' | 'ru', string>> = {
+      character_traits: {
+        en: "Your character traits, learning style, and interests",
+        ru: "Ваши черты характера, стиль обучения и интересы"
+      },
+      weaknesses: {
+        en: "Any weaknesses in your profile that feel risky to you",
+        ru: "Любые недостатки в вашем профиле, которые кажутся вам рискованными"
+      },
+      target_major: {
+        en: "The main major/field you are interested in and want a scholarship for",
+        ru: "Основная специальность/направление, которое вас интересует"
+      },
+      gpa: {
+        en: "Your GPA scores and IELTS/SAT levels if any",
+        ru: "Ваш средний балл (GPA) и уровень IELTS/SAT"
+      },
+      annual_income: {
+        en: "Your average family annual income ($ USD)",
+        ru: "Средний годовой доход вашей семьи ($ USD)"
+      },
+      essay_text: {
+        en: "Your statement of purpose / motivation essay text",
+        ru: "Текст вашего мотивационного эссе (SOP)"
+      },
+      cliche_sample: {
+        en: "The current simple or cliché introductory sentences of your essay",
+        ru: "Текущие простые или шаблонные первые предложения вашего эссе"
+      },
+      simple_hobbies: {
+        en: "Personal life, memorable hobbies, or interesting youth activities",
+        ru: "Личная жизнь, запоминающиеся хобби или интересные занятия"
+      },
+      school_activities: {
+        en: "Dozens of academic and non-academic activities, research or simple startups",
+        ru: "Академическая и внеучебная деятельность, исследования или стартапы"
+      },
+      target_uni: {
+        en: "The name of the target university you want to query",
+        ru: "Название целевого университета, который вы хотите запросить"
+      },
+      professor_name: {
+         en: "The full name of the professor you want to contact",
+         ru: "Полное имя профессора, к которому вы хотите обратиться"
+      },
+      professor_interests: {
+         en: "Scientific topics and academic interests of the professor",
+         ru: "Научные темы и академические интересы профессора"
+      },
+      student_interest: {
+         en: "Your specific academic interest matching the professor",
+         ru: "Ваш конкретный академический интерес, соответствующий профессору"
+      },
+      simple_lor: {
+         en: "The current draft of your simple recommendation letter (LOR)",
+         ru: "Текущий черновик вашего рекомендательного письма (LOR)"
+      },
+      rejection_letter: {
+         en: "The formal text of the rejection letter you received",
+         ru: "Официальный текст полученного письма об отказе"
+      }
+    };
+    return translations[id]?.[currentLang] || defaultLabel;
+  };
+
+  const getFieldPlaceholder = (id: string, defaultPlaceholder: string) => {
+    if (currentLang === 'uz') return defaultPlaceholder;
+    const placeholders: Record<string, Record<'en' | 'ru', string>> = {
+      character_traits: {
+        en: "E.g., Initiative taker, organized, loves teamwork, logical thinker...",
+        ru: "Например: Инициативный, организованный, люблю работать в команде..."
+      },
+      weaknesses: {
+        en: "E.g., IELTS 6.5, low GPA, or lack of extracurricular activities...",
+        ru: "Например: IELTS 6.5, низкий GPA или отсутствие внеучебной активности..."
+      },
+      target_major: {
+        en: "E.g., Computer Science, Renewable Energy, Business Administration...",
+        ru: "Например: Компьютерные науки, возобновляемая энергия, бизнес..."
+      },
+      gpa: {
+        en: "E.g., GPA: 4.8/5.0, IELTS 7.0, SAT 1400...",
+        ru: "Например: GPA: 4.8, IELTS 7.0, SAT 1400..."
+      },
+      annual_income: {
+        en: "E.g., $5,000",
+        ru: "Например: 5,000$"
+      },
+      essay_text: {
+        en: "Paste or type your essay draft here...",
+        ru: "Вставьте или введите черновик вашего эссе сюда..."
+      },
+      cliche_sample: {
+        en: "E.g., Since my childhood, I am deeply passionate about economics...",
+        ru: "Например: С детства я глубоко увлечен экономикой..."
+      },
+      simple_hobbies: {
+        en: "E.g., Provided free math classes, coded bots, planted trees in school garden...",
+        ru: "Например: Проводил бесплатные уроки математики, писал ботов..."
+      },
+      target_uni: {
+        en: "E.g., NYU Computer Science, Bocconi Economics...",
+        ru: "Например: NYU Computer Science, Bocconi Economics..."
+      },
+      professor_name: {
+         en: "E.g., Dr. John Harrison",
+         ru: "Например: Доктор Джон Харрисон"
+      },
+      simple_lor: {
+         en: "Paste draft of your LOR here...",
+         ru: "Вставьте черновик рекомендации..."
+      },
+      rejection_letter: {
+         en: "E.g., We regret to inform you...",
+         ru: "Например: К сожалению, мы вынуждены сообщить..."
+      }
+    };
+    return placeholders[id]?.[currentLang] || defaultPlaceholder;
+  };
+
+  const currentL10n = l10n[currentLang] || l10n.uz;
+
   const [selectedTool, setSelectedTool] = useState<ToolConfig | null>(null);
 
   useEffect(() => {
@@ -350,11 +687,11 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
   ];
 
   const categories = [
-    { key: 'all', label: "Barcha Modullar ⚡" },
-    { key: 'strategist', label: "THE STRATEGIST 🧭" },
-    { key: 'content_lab', label: "THE CONTENT LAB ✍️" },
-    { key: 'simulator', label: "THE SIMULATOR 🗣️" },
-    { key: 'future_path', label: "THE FUTURE PATH 🚀" }
+    { key: 'all', label: currentLang === 'en' ? "All Modules ⚡" : currentLang === 'ru' ? "Все Модули ⚡" : "Barcha Modullar ⚡" },
+    { key: 'strategist', label: currentLang === 'en' ? "THE STRATEGIST 🧭" : currentLang === 'ru' ? "СТРАТЕГ 🧭" : "THE STRATEGIST 🧭" },
+    { key: 'content_lab', label: currentLang === 'en' ? "THE CONTENT LAB ✍️" : currentLang === 'ru' ? "ЛАБОРАТОРИЯ ЭССЕ ✍️" : "THE CONTENT LAB ✍️" },
+    { key: 'simulator', label: currentLang === 'en' ? "THE SIMULATOR 🗣️" : currentLang === 'ru' ? "ТРЕНАЖЕР СОБЕСЕДОВАНИЯ 🗣️" : "THE SIMULATOR 🗣️" },
+    { key: 'future_path', label: currentLang === 'en' ? "THE FUTURE PATH 🚀" : currentLang === 'ru' ? "КАРЬЕРА И ВИЗА 🚀" : "THE FUTURE PATH 🚀" }
   ];
 
   const toolFields: Record<string, FormField[]> = {
@@ -666,13 +1003,22 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                 <span>TOPGRAND COGNITIVE SUITE v3.0</span>
               </span>
               <h2 className="text-3xl md:text-5xl font-black text-slate-950 tracking-tight leading-tight">
-                Chet elga <br />
-                <span className="bg-gradient-to-r from-blue-700 via-indigo-900 to-sky-850 bg-clip-text text-transparent">
-                  Daxshatli 30 ta AI Funksiya
-                </span>
+                {currentLang === 'uz' ? (
+                  <>Chet elga <br /><span className="bg-gradient-to-r from-blue-700 via-indigo-900 to-sky-850 bg-clip-text text-transparent">Daxshatli 30 ta AI Funksiya</span></>
+                ) : currentLang === 'ru' ? (
+                  <>Обучение за рубежом <br /><span className="bg-gradient-to-r from-blue-700 via-indigo-900 to-sky-850 bg-clip-text text-transparent">30 крутых ИИ-функций</span></>
+                ) : (
+                  <>Study Abroad <br /><span className="bg-gradient-to-r from-blue-700 via-indigo-900 to-sky-850 bg-clip-text text-transparent">30 Epic AI Superpowers</span></>
+                )}
               </h2>
               <p className="text-xs md:text-sm text-slate-700 max-w-xl mx-auto leading-relaxed font-bold">
-                Konsalting firmalarsiz, sun'iy intellekt orqali profilingizni xavfsiz mukammallikka ko'taring va haqiqiy dunyo grantlarini qo'lga kiriting!
+                {currentLang === 'uz' ? (
+                  "Konsalting firmalarsiz, sun'iy intellekt orqali profilingizni xavfsiz mukammallikka ko'taring va haqiqiy dunyo grantlarini qo'lga kiriting!"
+                ) : currentLang === 'ru' ? (
+                  "Откажитесь от дорогостоящих агентств. Используйте 30 когнитивных моделей ИИ, чтобы идеально подготовить документы и получить гранты самостоятельно!"
+                ) : (
+                  "Ditch expensive agencies. Use our 30 cognitive model layers to safely polish your profile and secure real global scholarships!"
+                )}
               </p>
 
               {/* METRIC BADGES */}
@@ -685,7 +1031,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
 
                 <div className="bg-white border border-blue-200 rounded-xl px-4 py-2 flex items-center gap-2 shadow-xs text-slate-800 font-extrabold">
                   <Clock className="h-3.5 w-3.5 text-blue-600 stroke-[2.5px]" />
-                  <span>SINOV RESETGACHA:</span>
+                  <span>{currentLang === 'uz' ? 'SINOV RESETGACHA:' : currentLang === 'ru' ? 'СБРОС ЛИМИТОВ ЧЕРЕЗ:' : 'LIMIT RESET IN:'}</span>
                   <span className="text-amber-800 font-extrabold">{countdownText}</span>
                 </div>
 
@@ -744,7 +1090,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                         {tool.popular && (
                           <span className="flex items-center gap-1 text-[8px] font-black tracking-widest text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full uppercase animate-pulse">
                             <Sparkles className="h-2.5 w-2.5 text-amber-500" />
-                            Mashhur
+                            {currentLang === 'uz' ? 'Mashhur' : currentLang === 'ru' ? 'Популярно' : 'Popular'}
                           </span>
                         )}
                       </div>
@@ -756,10 +1102,10 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                         </div>
                         <div>
                           <h3 className="font-black text-blue-950 leading-snug group-hover:text-blue-600 transition-colors text-sm sm:text-base">
-                            {tool.title}
+                            {getToolTitle(tool.key, tool.title)}
                           </h3>
-                          <p className="text-xs text-slate-700 font-bold mt-2 leading-relaxed">
-                            {tool.description}
+                          <p className="text-xs text-slate-705 font-medium mt-2 leading-relaxed">
+                            {getToolDescription(tool.key, tool.description)}
                           </p>
                         </div>
                       </div>
@@ -770,11 +1116,11 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                       <div className="text-[10px] font-mono">
                         {user.isPremium ? (
                           <span className="text-blue-600 flex items-center gap-1.5 font-bold">
-                            <Gem className="h-3.5 w-3.5 text-blue-500" /> PRO REJA (ONLINE)
+                            <Gem className="h-3.5 w-3.5 text-blue-500" /> {currentLang === 'uz' ? 'PRO REJA (ONLINE)' : currentLang === 'ru' ? 'PRO ТАРИФ (ОНЛАЙН)' : 'PRO PLAN (ONLINE)'}
                           </span>
                         ) : (
-                          <span className={`${isLimitLocked ? 'text-red-600 font-black' : 'text-slate-600'} font-black`}>
-                            Bepul limit: {limitRemaining} / {limitMax}
+                          <span className={`text-[10px] font-black ${isLimitLocked ? 'text-red-600' : 'text-slate-600'}`}>
+                            {currentLang === 'uz' ? 'Bepul limit:' : currentLang === 'ru' ? 'Бесплатный лимит:' : 'Free limit:'} {limitRemaining} / {limitMax}
                           </span>
                         )}
                       </div>
@@ -788,7 +1134,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                         }`}
                         id={`btn-select-tool-${tool.key}`}
                       >
-                        <span>Tekshirish</span>
+                        <span>{currentLang === 'uz' ? 'Tekshirish' : currentLang === 'ru' ? 'Открыть' : 'Verify'}</span>
                         <ArrowRight className="h-3 w-3 stroke-[2.5px]" />
                       </button>
                     </div>
@@ -798,135 +1144,137 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
             </div>
           </motion.div>
         ) : (
-          /* SINGLE DETAILED WORKSPACE VIEW (FULL SCREEN WORKSPACE OVERLAY WITH CRISP BRIGHT WHITE LABELS AND BACK BUTTON) */
+          /* SINGLE DETAILED WORKSPACE VIEW (INLINE COMPACT SECURE SUITE IN LIGHT BLUE & WHITE WITH COMPACT MOBIL CONSOLE) */
           <motion.div
             key="workspace"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            className="fixed inset-0 z-50 bg-[#070b1e] text-slate-100 flex flex-col h-screen w-screen overflow-hidden"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="w-full bg-sky-50/70 border border-sky-200/60 rounded-[1.75rem] p-4 sm:p-6 text-slate-900 flex flex-col space-y-4 shadow-sm"
             id="detailed-workspace"
           >
-            {/* Elegant high-contrast top back button bar */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-slate-900/95 shrink-0 z-30 shadow-md" id="workspace-back-header">
+            {/* COMPACT TOP NAVIGATION BAR - DESIGNED FOR 1-TAP ACTION ON MOBILE */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3 border-b border-sky-100" id="workspace-back-header">
               <button
                 onClick={() => setSelectedTool(null)}
-                className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/10 font-extrabold text-xs transition cursor-pointer"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-sky-200 hover:bg-sky-50 text-sky-850 font-extrabold text-xs transition cursor-pointer active:scale-98 shadow-xs"
                 id="btn-back-to-catalog"
               >
-                <ArrowLeft className="h-4.5 w-4.5 text-cyan-400 stroke-[2.5px]" />
-                <span>Orqaga Qaytish</span>
+                <ArrowLeft className="h-4 w-4 text-sky-600 stroke-[2.5px]" />
+                <span>{currentL10n.backToCatalog}</span>
               </button>
 
-              <div className="flex items-center gap-3">
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-cyan-500/10 border border-cyan-400/20 px-3.5 py-1 text-xs font-black text-cyan-300">
-                  {selectedTool.title}
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <span className="inline-flex items-center gap-1 bg-white border border-sky-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 shadow-3xs">
+                  {getToolTitle(selectedTool.key, selectedTool.title)}
                 </span>
                 {user.isPremium ? (
-                  <span className="inline-flex items-center gap-1 bg-yellow-400/25 text-yellow-300 border border-yellow-400/20 px-3 py-1 rounded-full text-xs font-black uppercase">
-                    <Gem className="h-3.5 w-3.5 text-yellow-400 shrink-0" /> PRO Obuna
+                  <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-800 border border-amber-300 px-2.5 py-1 rounded-xl text-xs font-extrabold uppercase">
+                    <Gem className="h-3.5 w-3.5 text-amber-500 shrink-0" /> PRO
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 bg-white/5 border border-white/10 text-cyan-200 px-3 py-1 rounded-full text-xs font-extrabold uppercase font-mono">
-                    LIMIT: {limits[selectedTool.key]?.remaining ?? 3} / 3 REJA
+                  <span className="inline-flex items-center gap-1 bg-white border border-sky-200 text-sky-900 px-2.5 py-1 rounded-xl text-xs font-bold uppercase font-mono">
+                    {currentLang === 'uz' ? 'Limit:' : currentLang === 'ru' ? 'Лимит:' : 'Limit:'} {limits[selectedTool.key]?.remaining ?? 3} / 3
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Completely redefined responsive and gorgeous modern split workspace */}
-            <div className="flex-1 overflow-hidden flex flex-col lg:flex-row text-white bg-[#030612]/95 relative" id="detailed-workspace-redesign">
+            {/* RESPONSIVE LIGHT LAYOUT - INTEGRATED TO THE SCROLL FLOW WITHOUT ANY FIXED VIEWPORT JUMPS */}
+            <div className="w-full flex flex-col text-slate-900 bg-white border border-sky-100 rounded-2xl p-4 sm:p-5 shadow-inner" id="detailed-workspace-redesign">
               
               {chatHistory.length === 0 ? (
-                // INTRO & FORM ENTRY LAYOUT - Beautiful Centered Stage
-                <div className="flex-grow overflow-y-auto px-4 py-8 md:py-16 flex items-center justify-center w-full z-10" id="intro-entry-stage">
-                  <div className="w-full max-w-2xl bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 md:p-10 shadow-2xl space-y-8 animate-fade-in text-center balance">
+                // INTRO & FORM ENTRY LAYOUT - Sleek, Thin, Centered
+                <div className="w-full py-4 flex items-center justify-center" id="intro-entry-stage">
+                  <div className="w-full max-w-xl space-y-5 text-center">
                     
-                    {/* Tool Icon & Badge */}
-                    <div className="flex flex-col items-center space-y-3">
-                      <div className={`p-5 rounded-3xl bg-gradient-to-tr ${selectedTool.color} text-white shadow-lg shadow-indigo-500/10`}>
-                        {React.createElement(selectedTool.icon, { className: 'h-8 w-8 stroke-[2.2px]' })}
+                    {/* Tool Icon & Description */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className={`p-3 rounded-xl bg-gradient-to-tr ${selectedTool.color} text-white shadow-md`}>
+                        {(() => {
+                          const IconComp = selectedTool.icon;
+                          return <IconComp className="h-6 w-6 stroke-[2px]" />;
+                        })()}
                       </div>
                       <div className="space-y-1">
-                        <span className="text-[10px] font-mono font-black text-cyan-400 uppercase tracking-widest bg-cyan-400/10 border border-cyan-400/20 px-3 py-1 rounded-full">{selectedTool.category.replace(/_/g, " ")}</span>
-                        <h3 className="text-xl md:text-2xl font-black text-white leading-tight pt-2">{selectedTool.title}</h3>
-                        <p className="text-xs text-blue-200/60 max-w-md mx-auto">{selectedTool.description}</p>
+                        <span className="text-[9px] font-mono font-bold text-sky-700 uppercase tracking-wider bg-sky-150 border border-sky-200 px-2.5 py-0.5 rounded-full">{typeof selectedTool.category === 'string' ? selectedTool.category.replace(/_/g, " ").toUpperCase() : ""}</span>
+                        <h3 className="text-base font-black text-slate-900 pt-1 leading-tight">{getToolTitle(selectedTool.key, selectedTool.title)}</h3>
+                        <p className="text-xs text-slate-605 max-w-sm mx-auto leading-normal">{getToolDescription(selectedTool.key, selectedTool.description)}</p>
                       </div>
                     </div>
 
-                    {/* Dynamic Targeted Input Forms */}
-                    <form onSubmit={executeAIRequest} className="space-y-5 text-left md:max-w-xl mx-auto">
+                    {/* Highly Compounded Input Forms with Thinner Inputs and Controls */}
+                    <form onSubmit={executeAIRequest} className="space-y-4 text-left max-w-md mx-auto">
                       {toolFields[selectedTool.key]?.map((field) => (
-                        <div key={field.id} className="space-y-2">
-                          <label className="block text-[11px] font-black text-cyan-300 uppercase tracking-wider">
-                            {field.label}
+                        <div key={field.id} className="space-y-1">
+                          <label className="block text-[10px] font-bold text-slate-800 uppercase tracking-wider">
+                            {getFieldLabel(field.id, field.label)}
                           </label>
                           {field.type === 'textarea' ? (
                             <textarea
-                              rows={4}
+                              rows={3}
                               value={formValues[field.id] || ''}
                               onChange={(e) => setFormValues({ ...formValues, [field.id]: e.target.value })}
-                              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 py-4 px-4 text-xs font-bold text-white placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-all shadow-inner"
-                              placeholder={field.placeholder}
+                              className="w-full rounded-xl border border-sky-200 bg-white py-2 px-3 text-xs font-semibold text-slate-900 placeholder-slate-400 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-550/20 transition-all shadow-inner"
+                              placeholder={getFieldPlaceholder(field.id, field.placeholder)}
                             ></textarea>
                           ) : (
                             <input
                               type="text"
                               value={formValues[field.id] || ''}
                               onChange={(e) => setFormValues({ ...formValues, [field.id]: e.target.value })}
-                              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 py-4 px-4 text-xs font-bold text-white placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-all shadow-inner"
-                              placeholder={field.placeholder}
+                              className="w-full rounded-xl border border-sky-200 bg-white py-2 px-3 text-xs font-semibold text-slate-900 placeholder-slate-400 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-550/20 transition-all shadow-inner"
+                              placeholder={getFieldPlaceholder(field.id, field.placeholder)}
                             />
                           )}
                         </div>
                       ))}
 
-                      {/* Launch Button */}
+                      {/* Launch Button - Thin, Elegant, High Contrast */}
                       <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full py-4 rounded-2xl font-black text-xs text-white uppercase tracking-widest shadow-xl shadow-cyan-950/10 transition-all duration-200 cursor-pointer mt-4 ${
+                        className={`w-full py-2.5 rounded-xl font-extrabold text-xs text-white uppercase tracking-wider transition-all duration-150 cursor-pointer ${
                           loading 
-                            ? 'bg-slate-800 border border-white/5 opacity-50 cursor-not-allowed' 
-                            : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110 active:scale-[0.98]'
+                            ? 'bg-slate-350 border border-slate-300 text-slate-500 cursor-not-allowed opacity-75' 
+                            : 'bg-sky-600 hover:bg-sky-700 active:scale-[0.98]'
                         }`}
                         id="btn-execute-static"
                       >
                         {loading ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <RefreshCw className="animate-spin h-4 w-4 text-cyan-300" />
-                            Komissiya tahlil qilmoqda...
+                          <span className="flex items-center justify-center gap-1.5">
+                            <RefreshCw className="animate-spin h-3.5 w-3.5 text-white" />
+                            {currentL10n.formAnalyzing}
                           </span>
                         ) : (
-                          "AI Tahlilini olish ⚡"
+                          currentL10n.btnAction
                         )}
                       </button>
                     </form>
                   </div>
                 </div>
               ) : (
-                // HIGH QUALITY INTERACTIVE CONVERSATION SCREEN
-                <div className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden" id="interactive-conversation-stage">
+                // MULTI-SCREEN INTERACTIVE LIGHT DIALOGUE - HIGHER DENSITY FOR PHONE VIEW
+                <div className="w-full flex flex-col lg:flex-row gap-4 h-full" id="interactive-conversation-stage">
                   
-                  {/* Floating left information sidebar (Collapsible or thin on desktop) */}
-                  <div className="w-full lg:w-[280px] bg-slate-950/60 border-b lg:border-b-0 lg:border-r border-white/5 p-5 flex flex-col justify-between shrink-0 space-y-4 text-left">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-xl bg-gradient-to-tr ${selectedTool.color} text-white`}>
-                          {React.createElement(selectedTool.icon, { className: 'h-5 w-5 stroke-[2px]' })}
+                  {/* Floating Action Sidebar - Now Extremely Sleek and Compact */}
+                  <div className="w-full lg:w-[220px] bg-sky-50/50 border border-sky-100 p-3.5 rounded-xl flex flex-col gap-3 shrink-0 text-left">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-2 rounded-lg bg-gradient-to-tr ${selectedTool.color} text-white`}>
+                          {(() => {
+                            const IconComp = selectedTool.icon;
+                            return <IconComp className="h-4.5 w-4.5 stroke-[2px]" />;
+                          })()}
                         </div>
                         <div>
-                          <h4 className="text-xs font-black text-white">{selectedTool.title}</h4>
-                          <span className="text-[9px] font-mono text-cyan-400">SESSION ACTIVE</span>
+                          <h4 className="text-xs font-black text-slate-900">{getToolTitle(selectedTool.key, selectedTool.title)}</h4>
+                          <span className="text-[8px] font-mono text-emerald-700 font-extrabold">{currentL10n.activeSession}</span>
                         </div>
                       </div>
 
-                      <div className="p-3.5 bg-cyan-500/5 border border-cyan-500/10 rounded-2xl text-[10px] text-blue-200/80 leading-relaxed font-semibold">
-                        💡 **Jonli Muloqot faollashdi!** Komissiya tahlili yakunlandi. AI taqdim etgan tahlillar bo'yicha keyingi savollaringizni to'g'ridan-to'g'ri bering.
-                      </div>
-
-                      <div className="p-3.5 bg-amber-500/5 border border-amber-500/10 rounded-2xl text-[10px] text-amber-200/80 leading-relaxed font-semibold">
-                        ⚠️ **Eslatma**: Bosh sahifa yoki katalogga qaytsangiz, suhbat tarixi tozalanadi.
+                      <div className="p-2.5 bg-white border border-sky-100 rounded-xl text-[10px] text-slate-800 leading-relaxed font-semibold">
+                        💡 **{currentL10n.tipTitle}** {currentL10n.tipDesc}
                       </div>
                     </div>
 
@@ -936,35 +1284,35 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
                         setChatHistory([]);
                         setResult('');
                       }}
-                      className="w-full py-3 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white font-extrabold text-[11px] transition cursor-pointer text-center active:scale-[0.98]"
+                      className="w-full py-2 rounded-xl border border-sky-200 bg-white hover:bg-sky-50 text-sky-850 font-extrabold text-[10px] transition cursor-pointer text-center active:scale-[0.98]"
                     >
-                      Muloqotni qayta boshlash
+                      {currentL10n.restartBtn}
                     </button>
                   </div>
 
-                  {/* Primary Chat stream box */}
-                  <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-950/10">
+                  {/* Message viewport and lightweight messaging control on the right */}
+                  <div className="flex-1 flex flex-col min-h-[380px] justify-between">
                     
-                    {/* Message list viewport container */}
-                    <div className="flex-grow overflow-y-auto p-4 md:p-8 space-y-6 text-left">
+                    {/* Compact scrolling area for message history */}
+                    <div className="max-h-[350px] overflow-y-auto p-2 space-y-3.5 text-left border-b border-sky-100 pb-4 scrollbar-thin">
                       {chatHistory.map((msg, i) => (
                         <div 
                           key={i} 
                           className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
                         >
                           <div 
-                            className={`max-w-[85%] sm:max-w-xl rounded-3xl p-5 text-sm leading-relaxed ${
+                            className={`max-w-[90%] sm:max-w-lg rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed ${
                               msg.sender === 'user' 
-                                ? 'bg-blue-600 border border-blue-500 text-white font-extrabold ml-auto shadow-lg shadow-blue-900/10' 
-                                : 'bg-slate-900/70 border border-white/5 text-slate-100 mr-auto shadow-md'
+                                ? 'bg-sky-600 border border-sky-550 text-white font-extrabold ml-auto shadow-xs' 
+                                : 'bg-slate-50 border border-sky-150 text-slate-950 mr-auto shadow-3xs'
                             }`}
                           >
-                            <div className={`text-[8px] uppercase tracking-wider font-mono font-black mb-2 ${
-                              msg.sender === 'user' ? 'text-blue-100' : 'text-cyan-400'
+                            <div className={`text-[8px] uppercase tracking-wider font-mono font-bold mb-1 ${
+                              msg.sender === 'user' ? 'text-sky-100' : 'text-sky-700'
                             }`}>
-                              {msg.sender === 'user' ? 'Siz kiritgan ma\'lumot' : 'AI Maslahatchi'}
+                              {msg.sender === 'user' ? currentL10n.yourInput : currentL10n.aiAdviser}
                             </div>
-                            <div className="prose prose-invert max-w-none text-xs md:text-sm leading-relaxed break-words whitespace-pre-line">
+                            <div className="prose max-w-none text-xs leading-normal break-words whitespace-pre-line text-slate-900">
                               {msg.text}
                             </div>
                           </div>
@@ -973,31 +1321,31 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
 
                       {loading && (
                         <div className="flex justify-start animate-pulse">
-                          <span className="px-5 py-4 bg-slate-900 border border-white/10 text-cyan-300 rounded-3xl text-xs font-bold font-mono tracking-wider flex items-center gap-2">
-                            <RefreshCw className="animate-spin h-4 w-4 text-cyan-400" />
-                            AI Tahlil qilmoqda...
+                          <span className="px-3.5 py-2.5 bg-slate-50 border border-sky-100 text-sky-700 rounded-2xl text-[11px] font-bold font-mono tracking-wider flex items-center gap-1.5 shadow-2xs">
+                            <RefreshCw className="animate-spin h-3.5 w-3.5 text-sky-500" />
+                            {currentL10n.analyzing}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* Continuous Messaging Input Box at the bottom */}
-                    <div className="p-4 bg-slate-900/40 border-t border-white/5 backdrop-blur-md shrink-0">
-                      <form onSubmit={executeAIRequest} className="max-w-3xl mx-auto flex gap-2 w-full">
+                    {/* COMPACT STYLISH SEND INPUT BOX FOR SECURE COMPILATION IN SINGLE TOUCH */}
+                    <div className="pt-3">
+                      <form onSubmit={executeAIRequest} className="flex gap-1.5 w-full items-center">
                         <input
                           type="text"
                           value={chatMessage}
                           disabled={loading}
                           onChange={(e) => setChatMessage(e.target.value)}
-                          className="flex-1 rounded-2xl bg-slate-950 border border-white/10 py-4 px-5 text-xs md:text-sm font-bold text-white placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
-                          placeholder="Navbatdagi savolingiz yoki xabaringizni yozing..."
+                          className="flex-1 rounded-xl bg-white border border-sky-200 py-2 px-3.5 text-xs font-semibold text-slate-950 placeholder-slate-450 outline-none focus:border-sky-550 transition-all shadow-inner"
+                          placeholder={currentL10n.placeholderMsg}
                         />
                         <button
                           type="submit"
                           disabled={loading || !chatMessage.trim()}
-                          className="px-5 py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 border border-blue-500 font-extrabold text-white shadow-md active:scale-95 transition flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="p-2 ml-[1px] h-9 w-9 shrink-0 rounded-xl bg-sky-600 hover:bg-sky-500 text-white shadow-xs active:scale-95 transition flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                          <Send className="h-4 w-4" />
+                          <Send className="h-4.5 w-4.5" />
                         </button>
                       </form>
                     </div>
@@ -1006,7 +1354,7 @@ export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdate
 
                 </div>
               )}
-
+              
             </div>
 
           </motion.div>

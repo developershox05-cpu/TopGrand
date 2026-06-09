@@ -3,25 +3,24 @@
  * Directs API requests to the active full-stack container backend when hosted on static hosting like Cloudflare Pages.
  */
 export const getApiUrl = (endpoint: string): string => {
-  // If running in AI Studio preview sandbox environment or localhost, use relative paths directly
-  const isAistudioPreview = 
-    window.location.hostname.includes('aistudio.build') ||
+  // If running in development or local sandbox, use relative path directly
+  const isLocalDev = 
     window.location.hostname.includes('localhost') ||
     window.location.hostname === '127.0.0.1';
 
-  if (isAistudioPreview) {
+  if (isLocalDev) {
     return endpoint;
   }
 
-  // Fallback for production static hosting (e.g. cloudflare pages topgrand.pages.dev)
+  // For static platform hostings (e.g., Cloudflare Pages, GitHub Pages)
   const isStaticHost = 
     window.location.hostname.includes('pages.dev') || 
-    window.location.hostname.includes('github.io');
+    window.location.hostname.includes('github.io') ||
+    !window.location.hostname.includes('run.app'); // Any non-cloud-run external domain
 
   if (isStaticHost) {
-    // If hosted on topgrand.pages.dev, let's dynamically target back to the user's active Cloud Run instance if known,
-    // or fallback to relative. Since companion servers run on port 3000, we prioritize relative or current origin.
-    return endpoint;
+    // Dynamically target the live companion server API container, which has open CORS enabled
+    return `https://ais-pre-563ze6njxkrwa26btbfzba-580667136284.asia-southeast1.run.app${endpoint}`;
   }
 
   return endpoint;
