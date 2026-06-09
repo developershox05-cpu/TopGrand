@@ -187,7 +187,7 @@ export default function App() {
                 href="https://t.me/TopGrands"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative flex items-center gap-1.5 bg-[#0088cc]/10 border border-[#0088cc]/25 hover:border-[#0088cc]/50 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0088cc] shadow-sm active:scale-95 transition hover:brightness-110"
+                className="relative hidden sm:flex items-center gap-1.5 bg-[#0088cc]/10 border border-[#0088cc]/25 hover:border-[#0088cc]/50 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0088cc] shadow-sm active:scale-95 transition hover:brightness-110"
                 id="header-tg-link"
               >
                 <Send className="h-3.5 w-3.5 text-[#0088cc] fill-[#0088cc]" />
@@ -411,11 +411,12 @@ export default function App() {
                   user={user} 
                   onOpenPremium={handleOpenPremium} 
                   onToggleFullScreen={setIsFullScreenOpen}
+                  currentLang={currentLang}
                 />
               )}
 
               {activeTab === 'courses' && (
-                <CoursePrepSection />
+                <CoursePrepSection currentLang={currentLang} />
               )}
 
               {activeTab === 'ai' && (
@@ -425,15 +426,16 @@ export default function App() {
                   onOpenPremium={handleOpenPremium}
                   onUpdateUsage={handleUpdateUsage}
                   onToggleFullScreen={setIsFullScreenOpen}
+                  currentLang={currentLang}
                 />
               )}
 
               {activeTab === 'uz' && (
-                <GrantCalculator />
+                <GrantCalculator currentLang={currentLang} />
               )}
 
               {activeTab === 'apply' && (
-                <ApplyUniversitySection />
+                <ApplyUniversitySection currentLang={currentLang} />
               )}
             </motion.div>
           </AnimatePresence>

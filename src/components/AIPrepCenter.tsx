@@ -16,6 +16,7 @@ interface AIPrepCenterProps {
   onOpenPremium: () => void;
   onUpdateUsage: (toolKey: string) => void;
   onToggleFullScreen?: (isOpen: boolean) => void;
+  currentLang?: 'uz' | 'en' | 'ru';
 }
 
 interface ToolConfig {
@@ -37,7 +38,7 @@ interface FormField {
   options?: string[];
 }
 
-export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdateUsage, onToggleFullScreen }: AIPrepCenterProps) {
+export default function AIPrepCenter({ user, onOpenAuth, onOpenPremium, onUpdateUsage, onToggleFullScreen, currentLang = 'uz' }: AIPrepCenterProps) {
   const [selectedTool, setSelectedTool] = useState<ToolConfig | null>(null);
 
   useEffect(() => {
