@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, Trophy, Shield, HelpCircle, Lock, Gem, LogIn, ExternalLink, 
   Send, ArrowRight, ArrowLeft, Play, Heart, Star, CheckCircle, Menu, X, GraduationCap, 
-  Compass, Award, BookOpen, Layers, MessageSquare, Briefcase, ChevronRight, LogOut, PhoneCall, Home
+  Compass, Award, BookOpen, Layers, MessageSquare, Briefcase, ChevronRight, LogOut, PhoneCall, Home,
+  DollarSign, Edit3
 } from 'lucide-react';
 import { User } from './types';
 import Hero from './components/Hero';
@@ -13,6 +14,7 @@ import ApplyUniversitySection from './components/ApplyUniversitySection';
 import AIPrepCenter from './components/AIPrepCenter';
 import AuthModal from './components/AuthModal';
 import HomeSection from './components/HomeSection';
+import SuiteFiveSections from './components/SuiteFiveSections';
 import { motion, AnimatePresence } from 'motion/react';
 import { translations } from './translations';
 
@@ -116,6 +118,14 @@ export default function App() {
     { id: 'all', label: translations[currentLang].catalog, desc: currentLang === 'uz' ? 'Real ma\'lumotlar va grant kvotalari' : currentLang === 'ru' ? 'Реальные данные и квоты грантов' : 'Real database and grant quotas', icon: GraduationCap },
     { id: 'courses', label: translations[currentLang].courses, desc: currentLang === 'uz' ? 'Akademik tayyorgarlik maktabi' : currentLang === 'ru' ? 'Школа академической подготовки' : 'Academic test prep school', icon: BookOpen },
     { id: 'ai', label: translations[currentLang].aiHub, desc: currentLang === 'uz' ? 'Chet elga tayyorlov AI markazi' : currentLang === 'ru' ? 'ИИ-центр подготовки за рубеж' : 'Study abroad test AI hub', icon: Sparkles, badge: 'PRO' },
+    
+    // The 5 New Premium Modules
+    { id: 'mapper', label: 'THE MAPPER', desc: currentLang === 'uz' ? 'Universitet va Shaharlar Tahlili' : currentLang === 'ru' ? 'Карта университетов и городов' : 'Universities & Cities Navigator', icon: Compass },
+    { id: 'funder', label: 'THE FUNDER', desc: currentLang === 'uz' ? 'Grants & Financial Support Suite' : currentLang === 'ru' ? 'Гранты и финансовая поддержка' : 'Grants & Financial Support Suite', icon: DollarSign },
+    { id: 'editor', label: 'THE EDITOR', desc: currentLang === 'uz' ? 'Tezkor va Aqlli Insho Tahrirchisi' : currentLang === 'ru' ? 'Редактор ИИ академического эссе' : 'AI Academic Essay Editorial Editor', icon: Edit3 },
+    { id: 'coach', label: 'THE COACH', desc: currentLang === 'uz' ? 'Suhbat va Nutq Simulyatori' : currentLang === 'ru' ? 'Тренинг ИИ собеседований' : 'Admissions Mock & Interview Trainer', icon: MessageSquare },
+    { id: 'guardian', label: 'THE GUARDIAN', desc: currentLang === 'uz' ? 'Hujjatlar & Kelajak Kafolati' : currentLang === 'ru' ? 'Контроль документов и апелляции' : 'Application Shield & Rejection Appeals', icon: Shield },
+
     { id: 'uz', label: translations[currentLang].grantCalc, desc: currentLang === 'uz' ? 'Siz uchun unikal 20+ yechim' : currentLang === 'ru' ? '20+ уникальных решений для вас' : '20+ custom calculators for you', icon: Layers },
     { id: 'apply', label: translations[currentLang].apply, desc: currentLang === 'uz' ? 'Ariza topshirish va vizalar' : currentLang === 'ru' ? 'Подача заявок и получение визы' : 'Direct execution & visa guides', icon: Compass }
   ];
@@ -436,6 +446,17 @@ export default function App() {
 
               {activeTab === 'apply' && (
                 <ApplyUniversitySection currentLang={currentLang} />
+              )}
+
+              {['mapper', 'funder', 'editor', 'coach', 'guardian'].includes(activeTab) && (
+                <SuiteFiveSections 
+                  sectionId={activeTab}
+                  user={user}
+                  onOpenAuth={() => handleOpenAuth('login')}
+                  onOpenPremium={handleOpenPremium}
+                  currentLang={currentLang}
+                  onToggleFullScreen={setIsFullScreenOpen}
+                />
               )}
             </motion.div>
           </AnimatePresence>
