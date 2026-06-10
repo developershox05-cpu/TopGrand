@@ -511,30 +511,75 @@ export default function App() {
               </div>
 
               <h2 className="mt-4 text-2xl font-black text-slate-900">TopGrand Premium 🏆</h2>
-              <p className="mt-1 text-xs text-yellow-600 font-bold uppercase tracking-wider">Tez orada Obunalar O'tadi</p>
+              <p className="mt-1 text-xs text-yellow-600 font-bold uppercase tracking-wider">Maksimal Natija & Cheksiz Imkoniyatlar</p>
 
-              <div className="my-6 rounded-2xl bg-sky-50/50 border border-sky-100 p-5 space-y-3.5 text-left text-xs text-slate-700">
-                <p className="text-xs font-bold text-slate-900 text-center uppercase tracking-widest text-sky-700">Premium cheksiz imkoniyatlari:</p>
-                <div className="space-y-2 font-semibold">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-sky-600 shrink-0" />
-                    <span>Real 30 ta sun'iy intellekt modullaridan cheksiz so'rovlar</span>
+              <div className="my-6 rounded-[1.75rem] bg-sky-50/50 border border-sky-100 p-6 space-y-4 text-left text-xs text-slate-705 max-h-[280px] overflow-y-auto shadow-inner" id="premium-benefits-scroller">
+                <p className="text-xs font-black text-slate-900 text-center uppercase tracking-widest text-[#0369a1]">Premium Cheksiz Imkoniyatlari:</p>
+                <div className="space-y-4 font-bold">
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4.5 w-4.5 text-sky-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-slate-950 font-black block">1. 15+ Daxshatli AI Modullari</span>
+                      <span className="text-[11px] text-slate-500 font-medium">The Mapper, Funder, Editor, Coach, va Guardian bo'limlarining barcha 15+ sun'iy intellekt xizmatlaridan cheksiz, limitsiz foydalanish.</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-sky-600 shrink-0" />
-                    <span>Universitet daxshatli intervyu simulyatorlarini to'liq ochish</span>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4.5 w-4.5 text-sky-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-slate-950 font-black block">2. University Explorer AI Maslahatchi</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Barcha global nufuzli universitetlar uchun rasmiy vakil bo'lgan AI maslahatchilardan cheksiz foydalanish.</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-sky-600 shrink-0" />
-                    <span>Xorijiy huquq va vizaviy maslahatlar bo'limlari</span>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4.5 w-4.5 text-sky-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-slate-950 font-black block">3. Visa Success Odds (Faqat PRO)</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Eng ilg'or diplomatik va siyosiy algoritm yordamida viza muvaffaqiyatini tahlil qilish va rad sabablarini oldindan topish.</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4.5 w-4.5 text-sky-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-slate-950 font-black block">4. Funding Storyteller</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Sizning oilaviy va shaxsiy sharoitingizga to'liq mo'ljallangan moliyaviy muhtojlik yordam insholari (Financial Aid Letters) noldan professional darajada yozish.</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4.5 w-4.5 text-sky-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-slate-950 font-black block">5. Cold-Email Outreach Craft</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Tashqi universitet professorlariga bevosita yoziladigan va 90%+ javob olish ehtimoli bo'lgan sovuq elektron maktublar tizimi.</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4.5 w-4.5 text-sky-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-slate-950 font-black block">6. LOR & ATS CV Editor (Cheksiz)</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Xorijiy tavsiyanoma xatlari (LORs) va Amerika / Yevropa standartidagi ATS turg'un rezyumelarni soniyalarda yaratish.</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4.5 w-4.5 text-sky-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-slate-950 font-black block">7. Mock Interview Simulator</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Xalqaro universitetlar va AQSh/Schengen elchixonasining barcha nozik savollaridan iborat interaktiv intervyu mashg'ulotlari.</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4.5 w-4.5 text-sky-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-slate-950 font-black block">8. Legal Guardian & Appeal</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Chet elda noqonuniy o'ylab topilgan qarorlar yoki rad etilgan grantlar/vizalar yuzasidan xalqaro darajada rasmiy shikoyat va protest xatlari tayyorlash.</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Premium acquisition list */}
+               {/* Premium acquisition list */}
               <div className="space-y-3">
                 <button
-                  onClick={() => alert("Premium to'lov integratsiyasi faollashtirilmoqda! Iltimos, administrator bilan bog'laning.")}
+                  type="button"
+                  onClick={() => alert("Tez orada! (Coming Soon)")}
                   className="w-full py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 hover:brightness-110 active:scale-[0.98] transition font-bold text-xs uppercase tracking-wider text-black shadow-lg cursor-pointer"
                 >
                   Premium Obunani Xarid qilish

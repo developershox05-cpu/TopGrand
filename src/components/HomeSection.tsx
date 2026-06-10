@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { 
   Sparkles, GraduationCap, BookOpen, Compass, 
-  Layers, ChevronRight, Check, Trophy, CheckSquare, Square, Info, MapPin, Award, X, Calendar, ArrowRight
+  Layers, ChevronRight, Check, Trophy, CheckSquare, Square, Info, MapPin, Award, X, Calendar, ArrowRight,
+  Globe, Star, DollarSign, FileText, CheckCircle, ArrowUpRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { User } from '../types';
+import { User, University } from '../types';
+import { universitiesData } from '../data';
 import PrepProgress from './PrepProgress';
 import TestimonialsCarousel from './TestimonialsCarousel';
 
@@ -27,8 +29,25 @@ interface GrantInfo {
   requirements: string[];
 }
 
+const campusImages = [
+  "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1627896157734-4d7d4388f24b?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1592280771190-3e2e4d571952?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1498243691581-b145c3f54a5c?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1519452635265-7b1fbfd1e4e0?auto=format&fit=crop&w=600&q=80"
+];
+
 export default function HomeSection({ user, currentLang, onOpenAuth, onOpenPremium, setActiveTab }: HomeSectionProps) {
   const [selectedSpec, setSelectedSpec] = useState<string>('us');
+
+  // --- TOP 50 CAROUSEL STATE ---
+  const [selectedCarouselUni, setSelectedCarouselUni] = useState<University | null>(null);
+  const [carouselUniWebError, setCarouselUniWebError] = useState<string | null>(null);
 
   // --- 1. LIVE GRANT TICKER COMPONENT STATE ---
   const [activeGrantModal, setActiveGrantModal] = useState<GrantInfo | null>(null);
@@ -409,6 +428,10 @@ export default function HomeSection({ user, currentLang, onOpenAuth, onOpenPremi
     { key: 'cn', flag: "🇨🇳", country: text.countries.cn.country, cost: text.countries.cn.cost, merit: text.countries.cn.merit, ielts: text.countries.cn.ielts, benefit: text.countries.cn.benefit }
   ];
 
+  const top50Unis = [...universitiesData]
+    .sort((a, b) => a.ranking - b.ranking)
+    .slice(0, 50);
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 py-4" id="home-dashboard-stage">
       
@@ -453,6 +476,10 @@ export default function HomeSection({ user, currentLang, onOpenAuth, onOpenPremi
         @keyframes marquee {
           0% { transform: translate3d(0, 0, 0); }
           100% { transform: translate3d(-50%, 0, 0); }
+        }
+        @keyframes marqueeRight {
+          0% { transform: translate3d(-50%, 0, 0); }
+          100% { transform: translate3d(0, 0, 0); }
         }
       `}</style>
 
@@ -575,6 +602,76 @@ export default function HomeSection({ user, currentLang, onOpenAuth, onOpenPremi
               ) : (
                 "Ajoyib boshlanish! Hujjatlar arsenalini (THE DOCUMENT VAULT) to\'ldirishda davom eting."
               )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* --- 50 TOP GLOBAL UNIVERSITIES CAROUSEL SLIDER (AUTO-ROTATING FROM LEFT TO RIGHT) --- */}
+      <div className="space-y-4" id="top-50-universities-track">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div>
+            <span className="px-3 py-1 rounded-full text-[9px] uppercase font-black text-indigo-805 bg-indigo-50 border border-indigo-100 tracking-wider">
+              TOP 50 GLOBAL UNIVERSITIES (QS WORLD RANKINGS)
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-blue-950 mt-1">
+              Top 50 Dunyo Universitetlari
+            </h2>
+            <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+              Dunyodagi eng kuchli 50 ta yetakchi oliygohlar ro'yxati. Istalgan universitetni tanlang va barcha ma'lumotlarni ko'ring.
+            </p>
+          </div>
+          <span className="text-[10px] text-indigo-500 font-mono font-black shrink-0 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full">
+            Chapdan O'ngga Aylanuvchi • Pause qilish uchun sichqonchani ustiga olib boring
+          </span>
+        </div>
+
+        {/* Endless marquee slider container of beautiful universities */}
+        <div className="w-full overflow-hidden bg-slate-50 border border-slate-200/60 rounded-[2rem] p-4 shadow-sm relative" id="top-50-marquee-track">
+          <div className="absolute top-0 bottom-0 left-0 w-16 bg-gradient-to-r from-slate-50 to-transparent pointer-events-none z-10" />
+          <div className="absolute top-0 bottom-0 right-0 w-16 bg-gradient-to-l from-slate-50 to-transparent pointer-events-none z-10" />
+
+          <div className="flex overflow-hidden relative h-48 py-2">
+            <div className="absolute flex gap-6 animate-[marqueeRight_40s_linear_infinite] hover:[animation-play-state:paused] whitespace-nowrap cursor-pointer">
+              {top50Unis.concat(top50Unis).map((uni, idx) => {
+                const imgUrl = campusImages[idx % campusImages.length];
+                return (
+                  <button
+                    key={`${uni.id}-carousel-${idx}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCarouselUni(uni);
+                      setCarouselUniWebError(null);
+                    }}
+                    className="w-56 shrink-0 bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:border-indigo-400 focus:outline-none transition-all duration-300 transform hover:-translate-y-1 shadow-sm text-left flex flex-col justify-between"
+                  >
+                    <div className="h-24 w-full relative overflow-hidden bg-slate-100 shrink-0">
+                      <img
+                        src={imgUrl}
+                        alt={uni.name}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute top-2 left-2 bg-indigo-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full font-mono shadow-sm">
+                        QS #{uni.ranking}
+                      </span>
+                      <span className="absolute bottom-2 right-2 bg-slate-900/75 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm">
+                        {uni.country}
+                      </span>
+                    </div>
+
+                    <div className="p-3 flex-1 flex flex-col justify-between">
+                      <h4 className="text-xs font-black text-slate-950 line-clamp-1 whitespace-normal">
+                        {uni.name}
+                      </h4>
+                      <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold mt-2 pt-1 border-t border-slate-100 shrink-0">
+                        <span>{uni.city}</span>
+                        <span className="text-indigo-600 font-black">Batafsil →</span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1043,6 +1140,143 @@ export default function HomeSection({ user, currentLang, onOpenAuth, onOpenPremi
                 >
                   "THE FUNDER" ga o\'tish
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 50 WORLD UNIVERSITIES - CAROUSEL SELECTION DETAIL MODAL */}
+      <AnimatePresence>
+        {selectedCarouselUni && (
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto" id="carousel-uni-detail-modal-overlay">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              className="bg-white rounded-[2.5rem] border border-slate-205 max-w-2xl w-full overflow-hidden shadow-2xl relative flex flex-col my-8"
+            >
+              {/* Image Banner */}
+              <div className="h-56 w-full relative bg-slate-105 shrink-0">
+                <img
+                  src={campusImages[top50Unis.findIndex(u => u.id === selectedCarouselUni.id) % campusImages.length] || campusImages[0]}
+                  alt={selectedCarouselUni.name}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-900/20 to-transparent" />
+                <button
+                  type="button"
+                  onClick={() => setSelectedCarouselUni(null)}
+                  className="absolute top-4 right-4 h-10 w-10 rounded-full bg-slate-900/50 hover:bg-slate-950/75 border border-white/20 flex items-center justify-center text-white transition cursor-pointer z-25"
+                  style={{ minHeight: '40px' }}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                
+                <div className="absolute bottom-4 left-6 right-6 text-left">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="bg-indigo-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">
+                      QS Rank: #{selectedCarouselUni.ranking}
+                    </span>
+                    <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-0.5 rounded-full border border-white/10 uppercase tracking-wider">
+                      {selectedCarouselUni.country} • {selectedCarouselUni.city}
+                    </span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                    {selectedCarouselUni.name}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Scrollable Contents */}
+              <div className="p-6 sm:p-8 space-y-6 max-h-[55vh] overflow-y-auto text-left">
+                {/* Description */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">Oliygoh haqida</h4>
+                  <p className="text-xs sm:text-sm text-slate-755 font-bold leading-relaxed">
+                    {selectedCarouselUni.description}
+                  </p>
+                </div>
+
+                {/* Metrics */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="rounded-2xl border border-blue-50 bg-slate-50/75 p-4 flex items-start gap-3">
+                    <div className="p-2.5 bg-blue-100 border border-blue-200 text-blue-700 rounded-xl shrink-0">
+                      <DollarSign className="h-5 w-5 stroke-[2.5px]" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Yillik Kontrakt / Grant</span>
+                      <p className="text-xs sm:text-sm text-blue-950 font-black leading-snug">{selectedCarouselUni.fee}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-blue-50 bg-slate-50/75 p-4 flex items-start gap-3">
+                    <div className="p-2.5 bg-blue-105 border border-blue-200 text-blue-700 rounded-xl shrink-0">
+                      <Calendar className="h-5 w-5 stroke-[2.5px]" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Qabul deadlines</span>
+                      <p className="text-xs sm:text-sm text-blue-950 font-black leading-snug">{selectedCarouselUni.deadlines}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Required Hujjatlar */}
+                <div className="rounded-2xl border border-blue-50 bg-slate-50/75 p-5 space-y-3.5">
+                  <h4 className="font-extrabold text-xs sm:text-sm text-blue-950 flex items-center gap-2">
+                    <FileText className="h-4.5 w-4.5 text-blue-700 shrink-0" />
+                    <span>Qabul uchun talab qilinadigan hujjatlar:</span>
+                  </h4>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-700 font-bold">
+                    {selectedCarouselUni.documents.map((doc, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5">
+                        <CheckCircle className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                        <span>{doc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Sticky Bottom Actions Grid */}
+              <div className="p-6 bg-slate-50 border-t border-slate-100 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-left">
+                  <h4 className="text-xs font-black text-slate-900 uppercase">Rasmiy Veb-Sayt</h4>
+                  <p className="text-[10px] text-slate-400 font-semibold leading-tight">Portaldagi bevosita yangiliklarni kuzating.</p>
+                </div>
+
+                <div className="w-full sm:w-auto flex flex-col gap-1.5 min-w-[200px]">
+                  {selectedCarouselUni.website && selectedCarouselUni.website.trim() !== "" && !selectedCarouselUni.website.includes("undefined") ? (
+                    <a
+                      href={selectedCarouselUni.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs py-3 px-5 rounded-xl flex items-center justify-center gap-2 transition duration-200 shrink-0 shadow-md text-center"
+                      style={{ minHeight: '44px' }}
+                    >
+                      <Globe className="h-4 w-4" />
+                      <span>Saytga tashrif buyurish</span>
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setCarouselUniWebError("Ushbu universitetning rasmiy veb-sayti mavjud emas.")}
+                      className="w-full bg-slate-205 text-slate-500 font-black text-xs py-3 px-5 rounded-xl flex items-center justify-center gap-2 shrink-0 transition cursor-pointer"
+                      style={{ minHeight: '44px' }}
+                    >
+                      <Globe className="h-4 w-4" />
+                      <span>Saytga tashrif buyurish</span>
+                    </button>
+                  )}
+
+                  {carouselUniWebError && (
+                    <span className="text-[10px] text-rose-600 font-extrabold text-center block bg-rose-50 border border-rose-100 rounded-lg py-1 px-2 animate-bounce">
+                      {carouselUniWebError}
+                    </span>
+                  )}
+                </div>
               </div>
             </motion.div>
           </div>

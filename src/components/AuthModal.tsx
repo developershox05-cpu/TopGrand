@@ -217,20 +217,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       onSuccess(profileData);
       onClose();
     } catch (err: any) {
-      console.warn("Google authentication warning (popup blocked or unauthorized domain on Pages/Cloudflare). Initiating automatic secure developer login fallback:", err);
-      
-      // Automatic robust premium login fallback so the app works 100% on any domain!
-      const dummyProfile = {
-        id: `google-shox-${Date.now()}`,
-        name: "Shoxrux",
-        surname: "Developer",
-        email: "developershox05@gmail.com",
-        isPremium: true
-      };
-      
-      localStorage.setItem('current_user', JSON.stringify({ ...dummyProfile, isLoggedIn: true, usageLog: {} }));
-      onSuccess(dummyProfile);
-      onClose();
+      console.warn("Google authentication warning (popup blocked or unauthorized domain):", err);
+      setError("Google orqali tizimga kirish imkonsiz (brauzerda pop-up oynalar bloklangan yoki ulanish cheklangan). Iltimos, Email va Parol orqali ro'yxatdan o'ting!");
     } finally {
       setIsLoading(false);
     }

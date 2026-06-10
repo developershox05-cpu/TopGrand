@@ -17,6 +17,7 @@ export default function UniversityExplorer({ user, onOpenPremium, onToggleFullSc
   const [selectedCountry, setSelectedCountry] = useState('barchasi');
   const [selectedUni, setSelectedUni] = useState<University | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [websiteError, setWebsiteError] = useState<string | null>(null);
 
   React.useEffect(() => {
     onToggleFullScreen?.(!!selectedUni);
@@ -80,6 +81,7 @@ export default function UniversityExplorer({ user, onOpenPremium, onToggleFullSc
     setSelectedUni(uni);
     setModalSubTab('info');
     setErrorMessage(null);
+    setWebsiteError(null);
   };
 
   // Localization Dictionary
@@ -745,6 +747,48 @@ export default function UniversityExplorer({ user, onOpenPremium, onToggleFullSc
                           </li>
                         ))}
                       </ul>
+                    </div>
+
+                    {/* Official Website Button Section */}
+                    <div className="border-t border-slate-100 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="text-left">
+                        <h4 className="text-sm font-extrabold text-blue-950">Rasmiy Veb-Sayt</h4>
+                        <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+                          Universitetning o'quv dasturlari va talablarini rasmiy portali orqali bevosita kuzating.
+                        </p>
+                      </div>
+                      
+                      <div className="w-full sm:w-auto flex flex-col gap-2">
+                        {selectedUni.website && selectedUni.website.trim() !== "" && !selectedUni.website.includes("undefined") ? (
+                          <a
+                            href={selectedUni.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3 px-6 rounded-2xl flex items-center justify-center gap-2 transition duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer text-center min-h-[44px]"
+                            style={{ minHeight: '44px' }}
+                          >
+                            <Globe className="h-4.5 w-4.5" />
+                            <span>Rasmiy Veb-Saytga O'tish</span>
+                            <ArrowUpRight className="h-4 w-4" />
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setWebsiteError("Ushbu universitetning rasmiy veb-sayti mavjud emas.")}
+                            className="bg-slate-200 hover:bg-slate-300 text-slate-500 font-black text-xs py-3 px-6 rounded-2xl flex items-center justify-center gap-2 transition duration-200 min-h-[44px] cursor-pointer"
+                            style={{ minHeight: '44px' }}
+                          >
+                            <Globe className="h-4.5 w-4.5" />
+                            <span>Rasmiy Veb-Saytga O'tish</span>
+                          </button>
+                        )}
+                        
+                        {websiteError && (
+                          <div className="text-xs text-rose-600 font-extrabold bg-rose-50 border border-rose-100 rounded-xl py-2 px-3 animate-pulse text-center">
+                            {websiteError}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                   </div>
