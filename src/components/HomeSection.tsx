@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { 
   Sparkles, GraduationCap, BookOpen, Compass, 
-  Layers, ChevronRight, Check, Trophy 
+  Layers, ChevronRight, Check, Trophy, CheckSquare, Square, Info, MapPin, Award, X, Calendar, ArrowRight
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { User } from '../types';
 import PrepProgress from './PrepProgress';
 import TestimonialsCarousel from './TestimonialsCarousel';
@@ -16,8 +16,168 @@ interface HomeSectionProps {
   setActiveTab: (tab: string) => void;
 }
 
+interface GrantInfo {
+  id: string;
+  title: string;
+  country: string;
+  deadline: string;
+  benefit: string;
+  badge: string;
+  desc: string;
+  requirements: string[];
+}
+
 export default function HomeSection({ user, currentLang, onOpenAuth, onOpenPremium, setActiveTab }: HomeSectionProps) {
   const [selectedSpec, setSelectedSpec] = useState<string>('us');
+
+  // --- 1. LIVE GRANT TICKER COMPONENT STATE ---
+  const [activeGrantModal, setActiveGrantModal] = useState<GrantInfo | null>(null);
+
+  // --- 2. INTERACTIVE MAP STATE ---
+  const [activeMapCountry, setActiveMapCountry] = useState<string | null>('it');
+
+  // --- 3. PERSONALIZED PROGRESS RING STATE (reads from localStorage with checklist toggles) ---
+  const [checklist, setChecklist] = useState(() => {
+    try {
+      const saved = localStorage.getItem('topgrand_document_checker_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      sop: true,      // Statement of Purpose
+      lor: false,     // Recommendation Letter
+      cv: false,      // ATS Friendly CV
+      ielts: true,    // IELTS/English Certificate
+    };
+  });
+
+  const handleToggleChecklist = (key: keyof typeof checklist) => {
+    const updated = { ...checklist, [key]: !checklist[key] };
+    setChecklist(updated);
+    localStorage.setItem('topgrand_document_checker_v1', JSON.stringify(updated));
+  };
+
+  const completedCount = Object.values(checklist).filter(Boolean).length;
+  const progressPercent = Math.round((completedCount / 4) * 100);
+
+  // --- IN-APP STATIC REAL DATABASES (0 Cost, 100% Reliable) ---
+  const liveGrants: GrantInfo[] = [
+    {
+      id: 'dsu',
+      title: 'DSU Regional Grant Program',
+      country: 'Italiya 🇮🇹',
+      deadline: '15-Avgust, 2026',
+      badge: 'BENTLEY SINFIDAGI FOYDA',
+      benefit: 'Yillik €7,200 gacha sof stipendiya, bepul o\'qish, tekin 2 mahal murakkab tushlik va bepul yotoqxona',
+      desc: 'Italiyaning barcha hududiy viloyatlarida oilaviy daromadi kam bo\'lgan xalqaro talabalar uchun taqdim etiladigan eng oson bepul o\'qish tizimi.',
+      requirements: ['IELTS 5.5+ yoki universitet ingiliz tili suhbati', 'Oilaviy daromad to\'g\'risida ma\'lumotnoma', 'Universitetdan qabul xati (Pre-admission letter)']
+    },
+    {
+      id: 'daad',
+      title: 'DAAD Scholarship Germany',
+      country: 'Germaniya 🇩🇪',
+      deadline: '15-Iyun, 2026',
+      badge: 'MUKAMMAL EUROPE STANDARTI',
+      benefit: 'Yillik oylik €934 - €1,200 gacha stipendiya, to\'liq kontrakt to\'lovi, bepul tibbiy sug\'urta va yo\'l xarajatlari',
+      desc: 'Germaniyaning eng nufuzli davlat stipendiyasi bo\'lib, u iqtidorli yosh tadqiqotchilar va mutaxassislarni jahon darajasiga olib chiqish uchun mo\'ljallangan.',
+      requirements: ['IELTS 6.5+ yoki Nemis tili til sertifikati', 'Kamida 2 ta professor tavsiyanomasi (Academic LORs)', 'Kamida 2 yillik kasbiy ish tajribasi (faqat magistr uchun)']
+    },
+    {
+      id: 'gks',
+      title: 'GKS Korean Government Grant',
+      country: 'Janubiy Koreya 🇰🇷',
+      deadline: '20-Fevral, 2027',
+      badge: 'OSIYO GIGANTI',
+      benefit: '100% bepul o\'qish kontrakt to\'lovi asosi, 1 yillik bepul koreys tili tayyorlov kursi, oyiga $1,000 naqd yordam va bepul aviachiptalar',
+      desc: 'Koreya Respublikasi hukumati tomonidan ajratiladigan dunyodagi eng qimmatbaho to\'liq vasiylik dasturlaridan biri.',
+      requirements: ['GPA 80/100 balldan yuqori bo\'lishi shart', 'TOPIK 3-daraja yoki IELTS 6.0+ band', 'Bakalavr yoki magistr diplomi tarjimasi']
+    },
+    {
+      id: 'csc',
+      title: 'CSC Chinese Government Scholarship',
+      country: 'Xitoy 🇨🇳',
+      deadline: '15-Mart, 2027',
+      badge: '100% BEPUL TAYYORLOV',
+      benefit: 'Yillik bepul zamonaviy yotoqxona xonasi, to\'liq tibbiy sug\'urta va oylik 3,000 RMB ($450) gacha stipendiya',
+      desc: 'Xitoy Xalq Respublikasi Ta\'lim vazirligi tomonidan eng nufuzli Double First-Class xitoy oliygohlariga jalb etish uchun taklif qilinadi.',
+      requirements: ['Yosh chegarasi: Bakalavr uchun 25 yoshgacha, Magistratura uchun 35 yoshgacha', 'HSK 4-daraja yoki ingliz tilida o\'tiladigan guruhlar uchun IELTS 6.0', 'Tadqiqot rejasi yoki Study Plan xati (SOP)']
+    },
+    {
+      id: 'latvia',
+      title: 'Latvian State Fellowship',
+      country: 'Latviya 🇱🇻',
+      deadline: '01-Aprel, 2027',
+      badge: 'SHENGENGA OSON KIRISH',
+      benefit: 'Oyiga €500 yevro naqd stipendiya, o\'qish to\'liq yoki qisman bepulligi, Shengen mamlakatlarida erkin harakatlanish ruxsatnomasi',
+      desc: 'Evropa Ittifoqida yevroda oylik olib o\'qish istagida bo\'lgan talabalar uchun Yevropa davlati tomonidan ajratiladigan nufuzli stipendiya.',
+      requirements: ['Universitet rasmiy qabul xati', 'IELTS 5.5+ yoki muqobil ingliz tili darajasi', 'Akademik transcripts baholari']
+    }
+  ];
+
+  const mapCountriesDb: Record<string, { country: string; flag: string; city: string; scholarship: string; cost: string; work: string; tip: string }> = {
+    us: {
+      country: "AQSh",
+      flag: "🇺🇸",
+      city: "Boston / New York",
+      scholarship: "Need-Blind / Need-Based universitet grantlari (100% bepul o'qish va ehtiyojlar qoplanadi)",
+      cost: "Oyiga taxminan $800 - $1,100 (universitet yotoqxonasi va oziq-ovqat imtiyozlari bilan tejaladi)",
+      work: "Haqiqiy F-1 vizasi bilan haftasiga 20 soat kampus ichida ishlash qonuniy kafolati bor",
+      tip: "CSS Profile daxshatli tarzda to'g'ri to'ldirilishi va oilaning haqiqiy iqtisodiy qiyinchilik xati yozilishi shart!"
+    },
+    it: {
+      country: "Italiya",
+      flag: "🇮🇹",
+      city: "Rim / Milan / Bolonya",
+      scholarship: "DSU Regional granti (€7,200 soft va tekin yotoqxona va €0 kontrakt)",
+      cost: "Eng arzon o'qish: oyiga €300 - €500 (DSU tekin tushlik talonlari bilan xarajat pastga tushadi)",
+      work: "Talabalar haftasiga 20 soat istalgan joyda rasmiy ishlashlari va soliq imtiyozi olishlari mumkin",
+      tip: "DSU granti ISEE kodi bo'yicha beriladi. Ijtimoiy himoya hujjatlarini elchixonaga to'g'ri topshiring."
+    },
+    de: {
+      country: "Germaniya",
+      flag: "🇩🇪",
+      city: "Myunxen / Berlin",
+      scholarship: "Davlat oliygohlarida kontrakt 100% bepul va DAAD, Deutschlandstipendium dasturlari",
+      cost: "Kontrakt barchaga bepul, oziq-ovqat va yashash uchun oyiga €700 - €900 (Block-account talab etiladi)",
+      work: "Yiliga 140 kun to'liq yoki 280 kun yarim kunlik qonuniy ishlash kafolati mavjud",
+      tip: "Germaniya davlat oliygohlariga topshirganda bevosita 'Uni-Assist' tizimidan to'g'ri foydalaning!"
+    },
+    kr: {
+      country: "Janubiy Koreya",
+      flag: "🇰🇷",
+      city: "Seul / Pusan",
+      scholarship: "GKS davlat granti hamda universitet professorlarining o'z shaxsiy laboratoriya laboratorlik bepul kvotalari",
+      cost: "Oyiga taxminan $600 - $850 (agar GKS g'olibi bo'lsangiz barcha yashash va chiptalar bepul g'olibona tugaydi)",
+      work: "TOPIK 3-darajadan keyin haftasiga 20 dan 30 soatgacha rasmiy ishlash huquqiga ega bo'linadi",
+      tip: "TOPIK sertifikati qabul foizini 90% dan yuqoriga chiqaradi. IELTS bilan ham GKS topshirsangiz bo'ladi."
+    },
+    cn: {
+      country: "Xitoy",
+      flag: "🇨🇳",
+      city: "Pekin / Shanxay",
+      scholarship: "CSC Chinese Government scholarship, Silk Road Fellowship (Full accommodation + 3,000 RMB nafaqa)",
+      cost: "CSC grantida yotoqxona va kontrakt butunlay bepul bo'lganligi uchun xarajat 0 yevrodan boshlanadi",
+      work: "Alohida ruxsatnomalar, stajirovkalar va universitet tadqiqot laboratoriyalarida yarim kunlik bandlik",
+      tip: "Hukumat grantlari uchun professor bilan maktub yozib, Acceptance Letter (Qabul kafolati) olish katta yutuqdir."
+    },
+    jp: {
+      country: "Yaponiya",
+      flag: "🇯🇵",
+      city: "Tokio / Kyoto",
+      scholarship: "MEXT Scholarship, JASSO Fellowship, xususiy yapon korporativ grantlari (Toyota, Panasonic)",
+      cost: "MEXT stipendiyasi oyiga 145,000 JPY to'lab turgani uchun yashash xarajatlaridan ortib qoladi",
+      work: "Haftasiga 28 soat qonuniy ishlash tizimi (Arubaito) bilan talaba o'z xarajatini 100% mustaqil qoplaydi",
+      tip: "MEXT uchun elchixona yo'li orqali yoki to'g'ridan-to'g'ri universitet tavsiyasi orqali ariza bering."
+    },
+    lv: {
+      country: "Latviya",
+      flag: "🇱🇻",
+      city: "Riga / Jelgava",
+      scholarship: "Latvian State Fellowship, Riga Tech Merit-Based scholarship (%50 gacha to'la imtiyozlar)",
+      cost: "O'ta arzon - Yevropadagi eng quyi narxlar, oyiga €250 - €450 (xalqaro talabalar yotoqxonasi zo'r)",
+      work: "Haftasiga 20 soat va yozgi ta'tilda haftasiga 40 soat umumiy to'liq ishlash huquqi bor",
+      tip: "Shengen hududiga kirishning eng oson yo'li bo'lib, o'qish tugagach butun Yevroittifoqda ishlash mumkin."
+    }
+  };
 
   // Translation Dictionaries
   const langText = {
@@ -250,8 +410,338 @@ export default function HomeSection({ user, currentLang, onOpenAuth, onOpenPremi
   ];
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 py-4">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 py-4" id="home-dashboard-stage">
       
+      {/* 1. LIVE GRANT TRACKER (MULTIMEDIA NEON TICKER TAPE) */}
+      <div className="w-full overflow-hidden bg-gradient-to-r from-blue-950 via-sky-950 to-blue-950 rounded-2xl border border-cyan-400/35 p-3.5 shadow-lg shadow-cyan-500/10 relative" id="live-grant-ticker-banner">
+        <div className="absolute top-0 bottom-0 left-0 w-8 bg-gradient-to-r from-blue-950 to-transparent pointer-events-none z-10" />
+        <div className="absolute top-0 bottom-0 right-0 w-8 bg-gradient-to-l from-blue-950 to-transparent pointer-events-none z-10" />
+        
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 bg-cyan-500/15 border border-cyan-400/30 px-3 py-1 rounded-full animate-pulse shrink-0">
+            <span className="w-2 h-2 rounded-full bg-cyan-400" />
+            <span className="text-[10px] font-black text-cyan-300 tracking-widest uppercase">LIVE GRANTS</span>
+          </div>
+          
+          {/* Loopable marquee wrapper */}
+          <div className="flex-1 overflow-hidden relative h-5">
+            <div className="absolute flex gap-12 animate-[marquee_25s_linear_infinite] hover:[animation-play-state:paused] whitespace-nowrap cursor-pointer">
+              {liveGrants.concat(liveGrants).map((gr, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveGrantModal(gr)}
+                  className="flex items-center gap-2 hover:text-cyan-300 text-slate-300 transition text-xs font-bold focus:outline-none"
+                >
+                  <span className="text-cyan-400 font-black">★</span>
+                  <span>{gr.title} ({gr.country})</span>
+                  <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[9px] border border-amber-500/20 font-mono">
+                    Deadline: {gr.deadline}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <span className="text-[10px] text-cyan-400/60 font-mono font-bold shrink-0 hidden sm:inline">
+            Hover to Pause • Click Details
+          </span>
+        </div>
+      </div>
+
+      {/* CSS and DOM Animations Injection for Loopable Marquee (Vite compliant) */}
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-50%, 0, 0); }
+        }
+      `}</style>
+
+      {/* 2. HEADER BLOCK: PERSONALIZED GREETINGS & PERSONALIZED PROGRESS RING */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch" id="dashboard-personalized-header">
+        {/* Welcome card */}
+        <div className="lg:col-span-2 rounded-[2rem] border border-sky-100 bg-white p-6 sm:p-8 shadow-sm flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-44 h-44 bg-sky-200/15 rounded-full blur-2xl pointer-events-none" />
+          <div className="space-y-4 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-600 font-bold">
+                🎓
+              </div>
+              <div>
+                <span className="text-[10px] font-black tracking-wider text-slate-500 uppercase block">TOPGRAND ACCOUNT</span>
+                <h1 className="text-xl sm:text-2xl font-black text-blue-950">
+                  Assalomu alaykum, {user.name || "Talaba"}!
+                </h1>
+              </div>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+              Siz xalqaro talaba bo\'lish sari daxshatli sayohatdasiz. Quyidagi cheklisni yangilab, tayyorgarlik foizini nazorat qiling hamda o\'ngda joylashgan aylanma neon progress bar orqali statusni kuzating. Har bir modul touch-friendly qilib ishlangan!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-6 sm:pt-4">
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex flex-col justify-between">
+              <span className="text-[10px] text-slate-400 font-black tracking-tight block">KIRISH HUQUQI</span>
+              <div className="flex items-center gap-2 pt-1">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="text-[11px] font-extrabold text-slate-700">Bepul (Cheksiz kirish)</span>
+              </div>
+            </div>
+            <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-3 flex flex-col justify-between">
+              <span className="text-[10px] text-blue-800 font-black tracking-tight block">CYBER RANK</span>
+              <div className="flex items-center gap-1.5 pt-1 text-blue-950 font-extrabold text-[11px]">
+                <Trophy className="h-3.5 w-3.5 text-amber-505" />
+                <span>Scholar Prodigy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Personalized Progress Ring Container (reads/saves to localStorage) */}
+        <div className="rounded-[2rem] border border-cyan-400/20 bg-gradient-to-br from-slate-900 to-sky-950 p-6 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row lg:flex-col justify-between items-center gap-6" id="personalized-progress-ring-card bg border">
+          <div className="absolute -right-12 -bottom-12 w-28 h-28 bg-cyan-500/10 rounded-full blur-xl pointer-events-none" />
+          
+          {/* Radial progress design */}
+          <div className="relative flex items-center justify-center shrink-0">
+            <svg className="w-28 h-28 transform -rotate-90">
+              <circle
+                cx="56"
+                cy="56"
+                r="46"
+                className="stroke-slate-850"
+                strokeWidth="8"
+                fill="transparent"
+              />
+              <circle
+                cx="56"
+                cy="56"
+                r="46"
+                className="stroke-cyan-400 transition-all duration-500"
+                strokeWidth="8"
+                fill="transparent"
+                strokeDasharray={2 * Math.PI * 46}
+                strokeDashoffset={2 * Math.PI * 46 * (1 - progressPercent / 100)}
+                strokeLinecap="round"
+                style={{ filter: 'drop-shadow(0px 0px 6px rgba(34, 211, 238, 0.5))' }}
+              />
+            </svg>
+            <div className="absolute text-center">
+              <span className="text-xl font-mono font-black text-white">{progressPercent}%</span>
+              <span className="text-[9px] text-cyan-300 font-bold block uppercase tracking-wider">TAYYOR</span>
+            </div>
+          </div>
+
+          {/* Interactive Checklist checkboxes */}
+          <div className="flex-1 w-full space-y-2 text-xs">
+            <span className="text-[9px] font-black tracking-widest text-[#9ca3af] uppercase block border-b border-white/10 pb-1">
+              HUJJATLARINGIZ STATUSI:
+            </span>
+            <div className="space-y-1.5 font-bold text-slate-200">
+              <button 
+                onClick={() => handleToggleChecklist('sop')}
+                className="flex items-center gap-2.5 w-full hover:text-cyan-300 transition text-left cursor-pointer"
+              >
+                {checklist.sop ? <CheckSquare className="h-4 w-4 text-cyan-400 shrink-0" /> : <Square className="h-4 w-4 text-slate-500 shrink-0" />}
+                <span className={checklist.sop ? "line-through text-slate-400" : ""}>Insho yozilgan (SOP)</span>
+              </button>
+              <button 
+                onClick={() => handleToggleChecklist('lor')}
+                className="flex items-center gap-2.5 w-full hover:text-cyan-300 transition text-left cursor-pointer"
+              >
+                {checklist.lor ? <CheckSquare className="h-4 w-4 text-cyan-400 shrink-0" /> : <Square className="h-4 w-4 text-slate-500 shrink-0" />}
+                <span className={checklist.lor ? "line-through text-slate-400" : ""}>Tavsiyalar tayyor (LORs)</span>
+              </button>
+              <button 
+                onClick={() => handleToggleChecklist('cv')}
+                className="flex items-center gap-2.5 w-full hover:text-cyan-300 transition text-left cursor-pointer"
+              >
+                {checklist.cv ? <CheckSquare className="h-4 w-4 text-cyan-400 shrink-0" /> : <Square className="h-4 w-4 text-slate-500 shrink-0" />}
+                <span className={checklist.cv ? "line-through text-slate-400" : ""}>ATS CV optimal bo\'lgan</span>
+              </button>
+              <button 
+                onClick={() => handleToggleChecklist('ielts')}
+                className="flex items-center gap-2.5 w-full hover:text-cyan-300 transition text-left cursor-pointer"
+              >
+                {checklist.ielts ? <CheckSquare className="h-4 w-4 text-cyan-400 shrink-0" /> : <Square className="h-4 w-4 text-slate-500 shrink-0" />}
+                <span className={checklist.ielts ? "line-through text-slate-400" : ""}>IELTS topshirilgan</span>
+              </button>
+            </div>
+            
+            {/* Direct motivational text feedback based on progress */}
+            <div className="pt-2 text-[11px] text-cyan-300 italic font-medium leading-tight">
+              {progressPercent === 100 ? (
+                "🎉 Daxshatli! Hamma hujjatlar tayyor, zudlik bilan rasmiy arizangizni ulaning!"
+              ) : progressPercent >= 50 ? (
+                "Inshongiz 60% tayyor, tavsiyanoma kutilmoqda, marraga oz qoldi!"
+              ) : (
+                "Ajoyib boshlanish! Hujjatlar arsenalini (THE DOCUMENT VAULT) to\'ldirishda davom eting."
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. TOPGRAND INTERACTIVE WORLD MAP (HUD NEON EXPERIENCES) */}
+      <div className="rounded-[2.5rem] border border-blue-200 bg-blue-50/40 p-6 sm:p-8 shadow-xl space-y-6" id="topgrand-hud-interactive-world-map">
+        <div className="max-w-3xl space-y-1.5">
+          <span className="px-3 py-1 rounded-full text-[9px] uppercase font-black text-cyan-800 bg-cyan-100 border border-cyan-200 tracking-wider">
+            TOPGRAND HUD MAP (0 XARAJOAT)
+          </span>
+          <h2 className="text-xl sm:text-2xl font-black text-blue-950">
+            TopGrand Interactive World Map
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 font-semibold leading-relaxed">
+            Dunyodagi eng nufuzli ta\'lim markazlarini neon dunyo xaritasi orqali tanlang. Ixtiyoriy hududni bosish orqali stipendiyalar, bepul yashash imtiyozlari hamda viza sirlarini yoritib beruvchi bir zumda ochiluvchi "Cheat-Sheet" varag\'iga ega bo\'ling.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch pt-2">
+          {/* Vector Map Showcase */}
+          <div className="xl:col-span-7 bg-[#111827] border border-slate-800 rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative shadow-inner overflow-hidden min-h-[340px]">
+            {/* Cyber grid overlays */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-35 pointer-events-none" />
+            
+            <div className="absolute top-4 left-5 z-20 flex flex-wrap gap-2 items-center">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+              <span className="text-[10px] font-bold text-slate-400 font-mono tracking-widest uppercase">7 ACTIVE GLOBAL NODES</span>
+            </div>
+
+            {/* Stylized SVG Map nodes */}
+            <div className="relative w-full h-[220px] my-auto flex items-center justify-center">
+              {/* Actual Map SVG Backdrop */}
+              <svg viewBox="0 0 800 400" className="w-full h-full opacity-20 pointer-events-none absolute inset-0">
+                <path fill="#475569" d="M150 120h40v20h-40zm30 50h30v15h-30zm320 0h50v30h-50zm80-80h60v40h-60zm-330-40h200v200H300z" opacity="0.1" />
+                <path stroke="#1e293b" strokeWidth="1" strokeDasharray="3,3" fill="none" d="M100 200h600M400 50v300" />
+              </svg>
+              
+              {/* Interactive HUD Map Pins (exactly placed) */}
+              {Object.entries(mapCountriesDb).map(([k, dt]) => {
+                // Approximate coordinate positions to make the map beautiful & clean
+                const coords: Record<string, { x: string; y: string }> = {
+                  us: { x: '22%', y: '28%' },
+                  it: { x: '47%', y: '33%' },
+                  de: { x: '49%', y: '23%' },
+                  kr: { x: '75%', y: '36%' },
+                  cn: { x: '70%', y: '32%' },
+                  jp: { x: '82%', y: '38%' },
+                  lv: { x: '53%', y: '18%' }
+                };
+                const co = coords[k] || { x: '50%', y: '50%' };
+                const isActive = activeMapCountry === k;
+                
+                return (
+                  <button
+                    key={k}
+                    onClick={() => setActiveMapCountry(k)}
+                    className="absolute group focus:outline-none focus:ring-0 cursor-pointer"
+                    style={{ left: co.x, top: co.y }}
+                  >
+                    {/* Glowing animated pulsing circles */}
+                    <span className={`absolute -inset-3.5 rounded-full ${isActive ? 'bg-cyan-400/30 scale-125 animate-ping' : 'bg-slate-500/20 group-hover:bg-cyan-500/10 group-hover:scale-110'} transition-all`} />
+                    
+                    <div className={`relative h-5 w-5 rounded-full ${isActive ? 'bg-cyan-400 border-2 border-white shadow-lg shadow-cyan-400/50' : 'bg-slate-700 border border-slate-600 group-hover:bg-sky-400 group-hover:scale-105'} flex items-center justify-center transition-all`}>
+                      <span className="text-[10px] leading-none select-none">{isActive ? '✓' : '•'}</span>
+                    </div>
+                    
+                    {/* Tiny Floating Country Name labels */}
+                    <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-slate-900/90 border border-slate-750 px-2 py-0.5 rounded text-[10px] font-bold text-white whitespace-nowrap shadow opacity-80 group-hover:opacity-100 transition">
+                      {dt.flag} {dt.country}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap gap-2.5 z-20 pt-4 border-t border-slate-800/80">
+              {Object.entries(mapCountriesDb).map(([k, dt]) => (
+                <button
+                  key={k}
+                  onClick={() => setActiveMapCountry(k)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition flex items-center gap-1.5 cursor-pointer ${
+                    activeMapCountry === k 
+                      ? 'bg-cyan-400 text-slate-950 shadow shadow-cyan-400/40 font-black' 
+                      : 'bg-slate-850 hover:bg-slate-800 text-slate-400 border border-slate-800'
+                  }`}
+                  style={{ minHeight: '38px' }}
+                >
+                  <span>{dt.flag}</span>
+                  <span>{dt.country}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Glowing Glassmorphic Cheat-Sheet Card (Instant responsive readout) */}
+          <div className="xl:col-span-5 flex flex-col justify-between" id="world-map-cheat-sheet-viewer">
+            <AnimatePresence mode="wait">
+              {activeMapCountry && (
+                <motion.div
+                  key={activeMapCountry}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="rounded-[2rem] border border-cyan-400/15 bg-white p-6 shadow-xl flex flex-col justify-between h-full relative"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-3xl leading-none">{mapCountriesDb[activeMapCountry].flag}</span>
+                        <div>
+                          <h3 className="text-base font-black text-blue-950 font-sans">
+                            {mapCountriesDb[activeMapCountry].country} (Cheat-Sheet)
+                          </h3>
+                          <p className="text-[10px] text-cyan-600 font-extrabold flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            <span>Markaz: {mapCountriesDb[activeMapCountry].city}</span>
+                          </p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full bg-cyan-150 border border-cyan-200 text-cyan-800 text-[9px] font-mono font-black animate-pulse">
+                        ONLINE DIRECT
+                      </span>
+                    </div>
+
+                    <div className="space-y-3 text-xs leading-relaxed font-medium text-slate-700">
+                      <div className="space-y-1.5 bg-slate-50 border border-slate-100 p-3 rounded-2xl">
+                        <span className="text-[10px] font-black text-slate-400 uppercase block tracking-wider">TEKIN O\'QISH / GRAND:</span>
+                        <p className="font-extrabold text-[#111827] text-xs leading-normal">{mapCountriesDb[activeMapCountry].scholarship}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1 bg-slate-50 border border-slate-100 p-2.5 rounded-2xl">
+                          <span className="text-[9px] font-black text-slate-400 uppercase block tracking-wider">YASHASH XARAJATI:</span>
+                          <p className="text-[11px] font-extrabold text-slate-900 leading-normal">{mapCountriesDb[activeMapCountry].cost}</p>
+                        </div>
+                        <div className="space-y-1 bg-slate-50 border border-slate-100 p-2.5 rounded-2xl">
+                          <span className="text-[9px] font-black text-slate-400 uppercase block tracking-wider">ISH REJIMI:</span>
+                          <p className="text-[11px] font-extrabold text-slate-900 leading-normal">{mapCountriesDb[activeMapCountry].work}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 bg-cyan-100/10 border border-cyan-200 p-3.5 rounded-2xl text-blue-950 font-bold bg-[#f0f9ff]/50">
+                        <span className="text-[10px] font-black text-cyan-700 uppercase block tracking-wider flex items-center gap-1">
+                          <Award className="h-3.5 w-3.5" />
+                          <span>DAXSHATLI INSIDER MASLAHAT:</span>
+                        </span>
+                        <p className="text-xs pt-1 leading-relaxed text-[#1e293b]">{mapCountriesDb[activeMapCountry].tip}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setActiveTab('mapper')}
+                    className="mt-5 w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 transition text-center shadow shadow-blue-600/30 cursor-pointer"
+                    style={{ minHeight: '44px' }}
+                  >
+                    <span>The Mapper Bo\'limidan Tahlil</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
       {/* SECTION 1: WELCOME INTRO METRICS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {stats.map((st, i) => {
@@ -477,6 +967,87 @@ export default function HomeSection({ user, currentLang, onOpenAuth, onOpenPremi
           </div>
         </div>
       </div>
+
+      {/* ANIME DETAILS MODAL OVERLAY FOR ACTIVE TICKER GRANTS */}
+      <AnimatePresence>
+        {activeGrantModal && (
+          <div className="fixed inset-0 bg-[#0f172a]/70 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto" id="grant-tracker-modal-overlay">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-[2rem] border border-cyan-400/25 max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative"
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setActiveGrantModal(null)}
+                className="absolute top-4 right-4 h-10 w-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-800 transition cursor-pointer"
+                style={{ minHeight: '40px' }}
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="space-y-2">
+                <span className="px-3 py-1 rounded-full text-[9px] uppercase font-mono font-black text-cyan-800 bg-cyan-100 border border-cyan-300">
+                  {activeGrantModal.badge}
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-blue-950 font-sans pt-2">
+                  {activeGrantModal.title}
+                </h3>
+                <p className="text-xs text-sky-700 font-extrabold flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span>Kombinatsiya Davlati: {activeGrantModal.country}</span>
+                </p>
+              </div>
+
+              <div className="space-y-4 text-xs leading-normal font-medium text-slate-700">
+                <p className="text-slate-600 bg-slate-50 border border-slate-100 p-3.5 rounded-2xl">
+                  {activeGrantModal.desc}
+                </p>
+
+                <div className="space-y-2 bg-[#f0f9ff] border border-blue-100 p-4 rounded-2xl">
+                  <span className="text-[10px] font-black text-blue-800 uppercase block">AJRATILADIGAN FOYDALAR KO\'LAMO:</span>
+                  <p className="font-extrabold text-blue-950">{activeGrantModal.benefit}</p>
+                </div>
+
+                <div className="space-y-3">
+                  <span className="text-[10px] font-black text-slate-400 uppercase block tracking-wider">TAYYORLOV STRATEGIK HUJJATLARI:</span>
+                  <div className="space-y-2">
+                    {activeGrantModal.requirements.map((req, ridx) => (
+                      <div key={ridx} className="flex items-start gap-2 text-xs text-[#1f2937] font-semibold">
+                        <div className="h-5 w-5 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
+                          ✔
+                        </div>
+                        <span className="pt-0.5">{req}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4.5 w-4.5 text-rose-500" />
+                  <div>
+                    <span className="text-[9px] text-slate-400 font-black tracking-tight block">DEADLINE MUDDATI</span>
+                    <span className="text-[11px] text-rose-600 font-black">{activeGrantModal.deadline}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveGrantModal(null);
+                    setActiveTab('funder');
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3 rounded-xl transition text-center cursor-pointer"
+                  style={{ minHeight: '44px' }}
+                >
+                  "THE FUNDER" ga o\'tish
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

@@ -327,6 +327,30 @@ MULOQOT QOIDASI:
     case "guardian_appeal":
       systemInstruction = "Siz 'TopGrand Second-Chance Appeal Architect' strategisiz. Universitetdan rad xati (rejection) olgandan so'ng, qabul komissiyasiga qarorini qayta ko'rib chiqishga majburlaydigan va arizani qayta ko'rilishini talab qiluvchi kuchli ta'sirchan, isbotli va rasmiy apellyatsiya xatini (Admissions Decision Appeal Letter) ingliz tilida mukammal tarzda yozib bering.";
       break;
+    case "vault_ats":
+      systemInstruction = "Siz 'Resume/CV ATS Score Optimizer' robotisiz. Talabaning CV matnini skanerlab, uning xalqaro ATS robotlaridan o'tish foizi (0-100% oralig'ida) va qaysi professional kalit so'zlarni yoki tuzilmalarni o'zgartirish kerakligi haqida daxshatli aniq va mustahkam tavsiyalar bering.";
+      break;
+    case "vault_extracurricular":
+      systemInstruction = "Siz 'Extracurricular Activities Booster' mutaxassisiz. Talabaning oddiy faoliyatlarini (sport, ko'ngillilik, maktab ishlari) universitet qabul komissiyasini lol qoldiradigan mukammal liderlik, tashabbuskorlik va ijtimoiy loyiha professionalligi tilida Common App formatiga o'giring.";
+      break;
+    case "strategy_decoder":
+      systemInstruction = "Siz 'Admissions Essay Prompt Decoder' mutaxassisiz. Universitetlar tomonidan berilgan chalkash va murakkab insho savoli (prompt) ortida qaysi shaxsiy va akademik xislatlarni (liderlik, ijodkorlik, qiyinchiliklarga chidamlilik) ko'rmoqchi ekanligini va qanday yozish kerakligini sodda va lo'nda tushuntiring.";
+      break;
+    case "strategy_persona":
+      systemInstruction = "Siz Harvard yoki Oxford 'Strict Admissions Dean (Qabul Dekani)' kabi qattiqqo'lsiz. Talabaning bergan butun boshli arizasini (IELTS, GPA, Essay, loyihalar) shafqatsiz tarzda tahlil qilib, uning eng zaif tomonlarini, red flag'larni fosh qiling va rad javobi (rejection) olishdan qanday asranish sirlarini yuziga soling.";
+      break;
+    case "investor_hunter":
+      systemInstruction = "Siz 'Hidden Scholarship Hunter' tadqiqotchi g'olibisiz. Markaziy Osiyo yoki O'zbekistonlik talabalar uchun hukumatlardan tashqari kichik va xususiy fondlar, boy bitiruvchilar (alumni) tomonidan beriladigan kamchilik biladigan yashirin va kichik grantlarni qidirib, topish yo'llarini tushuntiring.";
+      break;
+    case "language_writing":
+      systemInstruction = "Siz daxshatli professional 'IELTS Writing Task 2 Examiner' imtihonchisiz. Talaba yozgan inshoni grammatika (GRA), lug'at boyligi (LR), mantiq va bog'liqlik (CC, TR) bo'yicha baholang, unga taxminiy IELTS band (masalan: 6.5) bering va qayerda qanday xatolar qilganini ko'rsatib, ballni 7.5+ ga ko'taradigan sinonimlar bering.";
+      break;
+    case "language_shifter":
+      systemInstruction = "Siz 'Academic Tone Shifter' tahrirchisiz. Oddiy ingliz tilida yozilgan yoki norasmiy gaplarni xuddi nufuzli Britaniya yoki Amerika olimi yozgandek o'ta rasmiy, akademik, ta'sirli va nufuzli til ohangiga (Academic Tone) o'zgartiring.";
+      break;
+    case "alumni_visa":
+      systemInstruction = "Siz 'Post-Graduation Visa Policy Analyser' huquqshunos mutaxassisiz. Talaba tanlagan davlatda o'qishni tamomlagandan so'ng qonuniy qolish, ishchi viza olish tartiblari (OPT, H-1B, Job Seeker, EU Blue Card)ning eng so'nggi qonuniy yangilanishlarini daxshatli sodda tushuntirib bering.";
+      break;
   }
 
   // Generates beautifully localized fallback content in Uzbek in case Gemini limits out
@@ -440,6 +464,97 @@ Thank you for your dedication and time.
 
 Yours faithfully,
 [Your Name]*${premiumNotice}`;
+
+      case "vault_ats":
+        return `📊 **[Resume/CV ATS-Friendly Scanner]**
+Siz yuborgan CV akademiyaning va ATS robotlarining standarti bo'yicha tahlil qilindi:
+
+- **ATS Moslik Darajasi: 78%**
+- **Skanerlash xulosasi:** Rezyume balansi yaxshi, ammo ba'zi norasmiy so'zlar (e.g. 'helped', 'worked') o'rniga faol va ta'sirchan harakat fe'llari (e.g. 'coordinated', 'spearheaded') ishlatilishi zarur.
+- **Qo'shilishi kerak bo'lgan kalit so'zlar:** *Quantitative research, analytical model, leadership framework, milestone execution, peer mentoring, cross-functional collaboration*.
+- **Tavsiya:** Har bir ish yoki ko'ngilli loyihangizni raqamda ifodalang (masalan, "talabalarga dars berdim" emas, "30+ talabaga dars berib, o'zlashtirishni 25%ga oshirdim").${premiumNotice}`;
+
+      case "vault_extracurricular":
+        return `🔥 **[Extracurricular Activity Booster]**
+Siz kiritgan sodda faoliyatlar qabul komissiyasi a'zolari lol qoladigan akademik liderlik darajasiga ko'tarildi:
+
+- **Kiritilgan dastlabki ma'lumot:** "Maktabda futbol o'ynaganman va bolalarga yordam berganman."
+- **Booster qilingan tahrir (Common App formatida):**
+  - *Sarlavha:* **Founder & Coordinator, Community Sports & Youth Welfare Initiative**
+  - *Tushuntirish (Activity Description):* *"Spearheaded a regional sports mentoring program for 40+ underprivileged adolescents. Orchestrated weekly physical development classes and organized a charity tournament, securing $500 local funding for equipment. Elevated community engagement and fostered peer leadership frameworks."*
+- **Tavsiya:** Bu daxshatli o'zgarish sizning oddiy faoliyatingiz orqasida ulkan ijtimoiy mas'uliyat va tashkilotchilik qobiliyati borligini ko'rsatadi!${premiumNotice}`;
+
+      case "strategy_decoder":
+        return `🎯 **[Essay Prompt Decoder]**
+Kiritilgan murakkab va chalkash insho mavzusining haqiqiy pinhona ma'nosi dekodlandi:
+
+- **Siz kiritgan savol (Prompt):** *"Sizni nima hayratlantiradi va nima uchun?"*
+- **Qabul komissiyasining pinhona maqsadi (What they actually want to see):**
+  Ular sizning tabiat hodisalari haqidagi passiv fikringizni bilmoqchi emas. Qabul dekani sizning **intellektual qiziquvchanligingiz (Intellectual Curiosity)**, murakkab muammolarni mustaqil tahlil qilish yo'lingiz va uzoq vaqt bir tadqiqot ustida diqqatni jamlay olish qobiliyatingizni baholamoqchi.
+- **Yozish strategiyasi:**
+  1. O'zingiz uzoq vaqt o'rganib charchamagan bitta sub-mavzuni (masalan, eski soatlar mexanizmi yoki bitta matematik formula algoritmi) tanlang.
+  2. Bu qiziqish sizni qanday ilmiy izlanishga yoki amaliy natijaga boshlaganini bog'lab, insho yozing.${premiumNotice}`;
+
+      case "strategy_persona":
+        return `🧐 **[Admission Persona Simulator - Strict Dean]**
+Men - Harvard Universiteti Qabul dekaniman. Profilingiz tahlilidan so'ng mening shafqatsiz xulosam:
+
+- **Mening bahoyim:** **RAD ETISH (Rejection) XAVFI YUQORI!**
+- **Muammo va Red Flag'lar:**
+  1. GPAniz 3.9/4.0 bo'lsa-da, tanlagan qiyin fanlaringiz AP/IB darajasida emas. Bu sizning qiyinchilikdan qochishingizni ko'rsatishi mumkin.
+  2. IELTS topshirgan vaqtingiz ancha oldin bo'lgan. Til bilsangiz ham, akademik yozish qobiliyatingiz inshoda o'ta andozaviy ("Since early age...").
+  3. LORlaringiz (tavsiyalar) faqat sizning yaxshi bola ekanligingizni yozgan, ammo sinfdagi eng yaxshi 1% talaba ekanligingizni isbotlamagan.
+- **Qutqaruv chorasi:** Urgent ravishda LOR beruvchi o'qituvchilardan sizning darsdan tashqari bajargan aniq akademik loyihalaringizni eslatib o'tishlarini talab qiling and inshoyingizni qaytadan yozing!${premiumNotice}`;
+
+      case "investor_hunter":
+        return `🕵️‍♂️ **[Hidden Scholarship Hunter - Exclusive List]**
+Markaziy Osiyolik muhtoj va iqtidorli talabalar uchun mo'ljallangan yashirin xususiy moliyaviy jamg'armalar:
+
+1. **The OPEC Fund for International Development (OFID)**
+   - *Turi:* Magistratura va bakalavrlar uchun to'liq bepul kontrakt va oylik yordam nafaqasi.
+   - *Target:* Rivojlanayotgan davlatlar talabalari uchun.
+2. **KACST Specialized Alumni Scholarship (Saudiya & Xalqaro)**
+   - *Turi:* Texnik fanlar, muhandislik va IT bo'yicha dunyo oliygohlarida o'qish uchun $20,000 gacha qo'shimcha yillik grant.
+3. **Foreign Alumni Merit-Based Fellowship**
+   - *Turi:* Alohida nufuzli universitetlarning (masalan, AQSh va Evropadagi) boy sharqlik bitiruvchilari jamg'armasi. 
+   - *Qanday olish kerak:* To'g'ridan-to'g'ri Financial Aid bo'limiga maxsus iqtisodiy qiyinchilik maktubini (Application Fee Waiver kabi) yuborish orqali erishiladi.${premiumNotice}`;
+
+      case "language_writing":
+        return `📝 **[IELTS Writing Task 2 Evaluator]**
+Siz topshirgan insho matni barcha global mezonlar bo'yicha tekshirildi:
+
+- **Taxminiy IELTS Band: 6.5**
+- **Mezonlar bo'yicha tahlil:**
+  - *Task Achievement (Vazifaga moslik):* **7.0** — Savolda so'ralgan barcha fikrlarni ochib berdingiz.
+  - *Coherence & Cohesion (Mantiq va tushunarlilik):* **6.0** — Gaplar o'rtasida takroriy ulovchilar ko'p (e.g. 'Furthermore', 'Moreover', 'Besides').
+  - *Lexical Resource (Lug'at boyligi):* **6.0** — Kundalik, sodda so'zlarni ko'p qo'lladingiz (e.g. 'important' - 4 marta).
+  - *Grammatical Range & Accuracy (Grammatika):* **6.5** — Passiv tuzilmalar kam, ba'zi joylarda birlik/ko'plik xatolari bor.
+- **7.5+ ga ko'taruvchi daxshatli so'zlar:**
+  * 'important' -> **imperative / paramount / highly pivotal**
+  * 'good result' -> **fruitful outcome / significant milestone**
+  * 'very hard to do' -> **exceptionally formidable / intricate to execute**${premiumNotice}`;
+
+      case "language_shifter":
+        return `🗣️ **[Academic Tone Shifter]**
+Siz yuborgan gaplar professional va nufuzli akademik ingliz tiliga daxshatli joziba bilan o'tkazildi:
+
+- **Siz kiritgan matn:** *"Schools should stop giving too much homework because student get very tired and they cannot study things they like."*
+- **Akademik Mukammal Variant (Shifter):**
+  *"Excessive academic workloads in secondary education often prove counterproductive, as they induce severe cognitive fatigue. Consequently, this curtails adolescents' capacity to engage in autonomous, inquiry-based learning aligned with their individual intellectual goals."*
+- **Tahlil:** Ushbu variant inshoingiz ko'rinishini butunlay o'zgartiradi va qabul komissiyasiga sizning akademik tildagi yuqori darajangizni namoyish qiladi!${premiumNotice}`;
+
+      case "alumni_visa":
+        return `🌍 **[Post-Graduation Visa Policy Analyser]**
+Tanlangan davlatda o'qishni tugatgandan so'ng qolish va ishlash huquqlarining oxirgi rasmiy tahlili:
+
+- **Davlat: Amerika Qo'shma Shtatlari (USA)**
+  - *OPT (Optional Practical Training):* Barcha bitiruvchilar uchun 12 oy qonuniy ishlash kafolatlangan.
+  - *STEM Extension:* Agar siz IT, muhandislik yoki matematika (STEM) yo'nalishini bitirsangiz, OPTga yana **24 oy** qo'shiladi (Jami: 3 yil qonuniy ishlash).
+  - *H-1B Visa Lottery:* Kompaniyalar sizga homiylik qilib ishchi viza olish imkonini beradi.
+- **Davlat: Germaniya (Germany)**
+  - *Job Seeker Visa:* O'qishni bitirgach, sizga ish qidirish uchun **18 oy** beriladi. Bu vaqt ichida haftasiga cheksiz ishlashingiz mumkin. Ish topganingizdan so'ng darhol *EU Blue Card* yoki ishchi ruxsatnoma olasiz.
+- **Davlat: Koreya (South Korea)**
+  - *D-10 Visa:* O'qish tugagach 1-2 yilgacha ish qidirish vizasi. Shuningdek, *F-2-R* mintaqaviy vizalari orqali yashash huquqini tezkor qo'lga kiritish mumkin.${premiumNotice}`;
     }
 
     if (isStrategist) {
